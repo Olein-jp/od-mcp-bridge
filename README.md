@@ -43,8 +43,22 @@ WordPress は `http://localhost:8888`、管理画面は
 npm run env:status
 npm run env:logs
 npm run env:stop
+```
+
+### 自動テスト
+
+Docker と wp-env を起動した状態で、WordPress の専用テスト DB を使う統合テストを実行します。
+テストデータは各テスト内で作成されるため、開発環境の投稿やユーザーには依存しません。
+
+```bash
+npm run env:start
+composer test:integration
 composer lint
 ```
+
+`composer test:integration` は wp-env の `tests-cli` コンテナで PHPUnit を実行します。
+テストでは WordPress 6.9以上、Ability の登録とスキーマ、権限、公開済み投稿だけを返すこと、
+検索とページング、設定による無効化を確認します。
 
 WordPress 管理画面の「設定 → OD MCP Bridge」では、MCP エンドポイントの確認と、
 公開する Ability の有効・無効を設定できます。初期状態では3つとも有効です。
