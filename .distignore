@@ -4,6 +4,7 @@
 /.distignore
 /.editorconfig
 /.issue-drafts
+/.phpunit.result.cache
 /.wp-env.json
 /build
 /composer.json
@@ -12,5 +13,7 @@
 /package.json
 /package-lock.json
 /phpcs.xml.dist
+/phpunit.xml.dist
 /scripts
+/tests
 /vendor

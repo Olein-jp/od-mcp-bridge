@@ -11,12 +11,17 @@
   },
   "require-dev": {
     "dealerdirect/phpcodesniffer-composer-installer": "^1.0",
-    "wp-coding-standards/wpcs": "^3.0"
+    "phpunit/phpunit": "^9.6",
+    "wp-coding-standards/wpcs": "^3.0",
+    "yoast/phpunit-polyfills": "^4.0"
   },
   "config": {
     "allow-plugins": {
       "automattic/jetpack-autoloader": true,
       "dealerdirect/phpcodesniffer-composer-installer": true
+    },
+    "platform": {
+      "php": "7.4.0"
     },
     "sort-packages": true
   },
@@ -27,6 +32,7 @@
   },
   "scripts": {
     "lint": "phpcs --standard=phpcs.xml.dist",
-    "format": "phpcbf --standard=phpcs.xml.dist"
+    "format": "phpcbf --standard=phpcs.xml.dist",
+    "test:integration": "npx --no-install wp-env run tests-cli --env-cwd=wp-content/plugins/od-mcp-bridge ./vendor/bin/phpunit -- -c phpunit.xml.dist"
   }
 }
