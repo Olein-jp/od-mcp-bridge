@@ -4,6 +4,9 @@ OD MCP Bridge は、WordPress Abilities API で登録した機能を、公式の
 [WordPress MCP Adapter](https://github.com/WordPress/mcp-adapter) 経由で
 MCP クライアントへ安全に公開するためのプラグインです。
 
+実サイトへのインストールから MCP クライアントでの確認、各 Ability の入力項目、
+トラブル対応までの詳しい手順は、[利用マニュアル](docs/user-manual.md)を参照してください。
+
 ## MVP（0.1.0）
 
 認証済みユーザーが実行できる、次の read-only Ability を提供します。
