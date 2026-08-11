@@ -21,6 +21,9 @@ require_once __DIR__ . '/vendor/autoload_packages.php';
 
 define( 'OD_MCP_BRIDGE_VERSION', '0.2.0' );
 
+register_activation_hook( __FILE__, array( Olein\MCPBridge\Role_Manager::class, 'install' ) );
+register_uninstall_hook( __FILE__, array( Olein\MCPBridge\Role_Manager::class, 'uninstall' ) );
+
 /**
  * Initializes the plugin.
  *

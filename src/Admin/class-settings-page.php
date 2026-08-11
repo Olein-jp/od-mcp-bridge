@@ -187,7 +187,7 @@ final class Settings_Page {
 			</table>
 
 			<p class="description">
-				<?php esc_html_e( 'Use a dedicated Subscriber user and an Application Password. Store credentials only in the MCP client environment; this plugin never stores them.', 'od-mcp-bridge' ); ?>
+				<?php esc_html_e( 'Use a dedicated Subscriber for public content, or the MCP Maintenance Reader role for maintenance abilities. Store credentials only in the MCP client environment; this plugin never stores them.', 'od-mcp-bridge' ); ?>
 			</p>
 			<ol>
 				<li>
@@ -195,7 +195,7 @@ final class Settings_Page {
 					printf(
 						wp_kses(
 							/* translators: %s: URL to the Add New User screen. */
-							__( 'Create a dedicated user with the Subscriber role on the <a href="%s">Add New User</a> screen.', 'od-mcp-bridge' ),
+							__( 'Create a dedicated user with the Subscriber or MCP Maintenance Reader role on the <a href="%s">Add New User</a> screen.', 'od-mcp-bridge' ),
 							array( 'a' => array( 'href' => array() ) )
 						),
 						esc_url( admin_url( 'user-new.php' ) )

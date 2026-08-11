@@ -7,6 +7,7 @@
 
 use Olein\MCPBridge\Abilities;
 use Olein\MCPBridge\Admin\Settings_Page;
+use Olein\MCPBridge\Role_Manager;
 
 /**
  * Tests public Ability contracts in a real WordPress environment.
@@ -242,6 +243,11 @@ class Test_OD_MCP_Bridge_Abilities extends WP_UnitTestCase {
 		foreach ( $maintenance_keys as $key ) {
 			$this->assertTrue( wp_get_ability( 'od-mcp-bridge/' . $key )->check_permissions() );
 		}
+
+		wp_set_current_user( self::factory()->user->create( array( 'role' => Role_Manager::ROLE ) ) );
+		foreach ( $maintenance_keys as $key ) {
+			$this->assertTrue( wp_get_ability( 'od-mcp-bridge/' . $key )->check_permissions() );
+		}
 	}
 
 	/** Confirms cached update status is capability-filtered. */
@@ -280,7 +286,7 @@ class Test_OD_MCP_Bridge_Abilities extends WP_UnitTestCase {
 
 		$user_id = self::factory()->user->create( array( 'role' => 'subscriber' ) );
 		$user    = new WP_User( $user_id );
-		$user->add_cap( 'update_plugins' );
+		$user->add_cap( Role_Manager::VIEW_PLUGIN_UPDATES );
 		wp_set_current_user( $user_id );
 		$result = wp_get_ability( 'od-mcp-bridge/get-update-status' )->execute();
 
@@ -330,7 +336,7 @@ class Test_OD_MCP_Bridge_Abilities extends WP_UnitTestCase {
 			)
 		);
 
-		wp_set_current_user( self::factory()->user->create( array( 'role' => 'editor' ) ) );
+		wp_set_current_user( self::factory()->user->create( array( 'role' => Role_Manager::ROLE ) ) );
 		$summary = wp_get_ability( 'od-mcp-bridge/get-content-summary' )->execute();
 		$this->assertGreaterThanOrEqual( 1, $summary['types']['post']['published'] );
 		$this->assertGreaterThanOrEqual( 1, $summary['types']['post']['drafts'] );

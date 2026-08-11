@@ -56,14 +56,18 @@ Ability は、WordPress 側で実行できる個別の機能を表します。�
 | `get-posts` / `get-post` | 公開済み投稿の一覧・本文 | `read` | 有効 |
 | `get-pages` / `get-page` | 公開済み固定ページの一覧・本文 | `read` | 有効 |
 | `get-terms` | カテゴリーまたはタグ | `read` | 有効 |
-| `get-update-status` | キャッシュ済み更新状況 | `update_core`、`update_plugins`、`update_themes` のいずれか | 無効 |
-| `get-plugins` | プラグイン状態 | `activate_plugins` | 無効 |
-| `get-themes` | テーマ状態 | `switch_themes` | 無効 |
-| `get-site-health` | 限定的なサイトヘルス結果 | `view_site_health_checks` | 無効 |
-| `get-content-summary` | 投稿・固定ページの件数と30日間の活動 | `edit_posts` | 無効 |
+| `get-update-status` | キャッシュ済み更新状況 | `od_mcp_bridge_view_*_updates` | 無効 |
+| `get-plugins` | プラグイン状態 | `od_mcp_bridge_view_plugins` | 無効 |
+| `get-themes` | テーマ状態 | `od_mcp_bridge_view_themes` | 無効 |
+| `get-site-health` | 限定的なサイトヘルス結果 | `od_mcp_bridge_view_site_health` | 無効 |
+| `get-content-summary` | 投稿・固定ページの件数と30日間の活動 | `od_mcp_bridge_view_content_summary` | 無効 |
 | `get-stale-content` | 長期間更新されていない公開コンテンツ | `read` | 無効 |
-| `get-cron-status` | WP-Cron の実行予定 | `manage_options` | 無効 |
-| `get-maintenance-snapshot` | 保守情報の集約結果 | `manage_options` | 無効 |
+| `get-cron-status` | WP-Cron の実行予定 | `od_mcp_bridge_view_cron` | 無効 |
+| `get-maintenance-snapshot` | 保守情報の集約結果 | `od_mcp_bridge_view_maintenance` | 無効 |
+
+保守系の独自 capability は、プラグインが作成する「MCP Maintenance Reader」ロールと
+管理者ロールへ付与されます。この専用ロールにはプラグイン有効化、テーマ変更、設定変更などの
+WordPress管理権限を付与しないため、管理者をMCP接続へ使わずに保守情報を参照できます。
 
 ## Codex から使うときのプロンプト例
 
@@ -273,13 +277,12 @@ https://example.com/wp-json/mcp/mcp-adapter-default-server
 
 1. 管理者で「ユーザー」→「ユーザーを追加」を開く
 2. MCP 接続専用のユーザー名とメールアドレスを入力する
-3. 「権限グループ」で「購読者」を選択する
+3. 公開コンテンツだけなら「購読者」、保守系も使うなら「MCP Maintenance Reader」を選択する
 4. ユーザーを追加する
 
-購読者は、WordPress 内部の権限を表す `read` capability を持ちます。初期状態の6件と
-`get-stale-content` は購読者で利用できます。その他の保守系 Ability には上表の権限が必要です。
-必要な capability だけを与えた専用ロールを推奨します。管理者を接続に使う場合は、すべての
-管理情報へ到達できる認証情報になるため、保管と失効を特に厳格に行ってください。
+購読者は、初期状態の6件と `get-stale-content` を利用できます。「MCP Maintenance Reader」は
+公開コンテンツ系に加えて、管理画面で有効にした保守系 Ability を利用できます。管理者を接続に
+使う場合は、すべての管理情報へ到達できる認証情報になるため、保管と失効を特に厳格に行ってください。
 
 専用ユーザーは通常の閲覧者と区別しやすい名前にしてください。ただし、このユーザー名を
 README、Issue、サポートへの問い合わせなど、第三者が閲覧できる場所へ記載しないでください。
@@ -443,7 +446,7 @@ mcp_inspector \
 ```
 
 保守スナップショットを使う場合は、管理画面でスナップショットと必要な保守系 Ability を
-有効にしてから、`manage_options` を持つ専用ユーザーで実行します。
+有効にしてから、「MCP Maintenance Reader」ロールの専用ユーザーで実行します。
 
 ```bash
 mcp_inspector \

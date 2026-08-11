@@ -87,8 +87,9 @@ https://example.com/wp-json/mcp/mcp-adapter-default-server
 ### 専用ユーザーと Application Password
 
 1. 管理者で「ユーザー → ユーザーを追加」を開き、MCP 接続専用ユーザーを作成します。
-2. 公開コンテンツ系だけを使う場合、権限グループは「購読者（Subscriber）」を選びます。
-   保守系を使う場合は、必要な capability を持つ専用ロールを用意してください。
+2. 公開コンテンツ系だけを使う場合は「購読者（Subscriber）」、保守系も使う場合は
+   プラグインが作成する「MCP Maintenance Reader」ロールを選びます。この専用ロールには
+   プラグイン有効化、テーマ変更、設定変更などのWordPress管理権限は含まれません。
 3. 専用ユーザーでログインし、「ユーザー → プロフィール」の「Application Passwords」で
    `OD MCP Bridge` などの識別しやすい名前を入力して発行します。
 4. 表示された Application Password は一度だけコピーし、MCP クライアント側の

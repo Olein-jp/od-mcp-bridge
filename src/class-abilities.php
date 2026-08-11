@@ -193,13 +193,13 @@ final class Abilities {
 	public function execute_update_status() {
 		$result = array( 'generated_at' => gmdate( DATE_W3C ) );
 
-		if ( current_user_can( 'update_core' ) ) {
+		if ( current_user_can( Role_Manager::VIEW_CORE_UPDATES ) ) {
 			$result['core'] = $this->get_core_update_status();
 		}
-		if ( current_user_can( 'update_plugins' ) ) {
+		if ( current_user_can( Role_Manager::VIEW_PLUGIN_UPDATES ) ) {
 			$result['plugins'] = $this->get_plugin_update_status();
 		}
-		if ( current_user_can( 'update_themes' ) ) {
+		if ( current_user_can( Role_Manager::VIEW_THEME_UPDATES ) ) {
 			$result['themes'] = $this->get_theme_update_status();
 		}
 		if ( $this->can_view_updates() ) {
@@ -483,34 +483,39 @@ final class Abilities {
 		return current_user_can( 'read' );
 	}
 
-	/** Checks the current user's edit capability. */
-	public function can_edit_posts() {
-		return current_user_can( 'edit_posts' );
+	/** Checks the current user's content summary capability. */
+	public function can_view_content_summary() {
+		return current_user_can( Role_Manager::VIEW_CONTENT );
 	}
 
-	/** Checks the current user's settings capability. */
-	public function can_manage_options() {
-		return current_user_can( 'manage_options' );
+	/** Checks the current user's Cron capability. */
+	public function can_view_cron() {
+		return current_user_can( Role_Manager::VIEW_CRON );
+	}
+
+	/** Checks the current user's maintenance snapshot capability. */
+	public function can_view_maintenance() {
+		return current_user_can( Role_Manager::VIEW_MAINTENANCE );
 	}
 
 	/** Checks the current user's Site Health capability. */
 	public function can_view_site_health() {
-		return current_user_can( 'view_site_health_checks' );
+		return current_user_can( Role_Manager::VIEW_SITE_HEALTH );
 	}
 
 	/** Checks whether at least one update section is permitted. */
 	public function can_view_updates() {
-		return current_user_can( 'update_core' ) || current_user_can( 'update_plugins' ) || current_user_can( 'update_themes' );
+		return current_user_can( Role_Manager::VIEW_CORE_UPDATES ) || current_user_can( Role_Manager::VIEW_PLUGIN_UPDATES ) || current_user_can( Role_Manager::VIEW_THEME_UPDATES );
 	}
 
 	/** Checks the current user's plugin capability. */
-	public function can_activate_plugins() {
-		return current_user_can( 'activate_plugins' );
+	public function can_view_plugins() {
+		return current_user_can( Role_Manager::VIEW_PLUGINS );
 	}
 
 	/** Checks the current user's theme capability. */
-	public function can_switch_themes() {
-		return current_user_can( 'switch_themes' );
+	public function can_view_themes() {
+		return current_user_can( Role_Manager::VIEW_THEMES );
 	}
 
 	/** Registers site information. */
@@ -595,7 +600,7 @@ final class Abilities {
 			__( 'Get plugin inventory', 'od-mcp-bridge' ),
 			__( 'Returns sanitized plugin versions and activation, auto-update, and update states.', 'od-mcp-bridge' ),
 			array( $this, 'execute_plugins' ),
-			array( $this, 'can_activate_plugins' ),
+			array( $this, 'can_view_plugins' ),
 			null,
 			$this->get_plugins_schema()
 		);
@@ -608,7 +613,7 @@ final class Abilities {
 			__( 'Get theme inventory', 'od-mcp-bridge' ),
 			__( 'Returns sanitized theme versions and activation, parent, auto-update, and update states.', 'od-mcp-bridge' ),
 			array( $this, 'execute_themes' ),
-			array( $this, 'can_switch_themes' ),
+			array( $this, 'can_view_themes' ),
 			null,
 			$this->get_themes_schema()
 		);
@@ -634,7 +639,7 @@ final class Abilities {
 			__( 'Get content summary', 'od-mcp-bridge' ),
 			__( 'Returns post and page counts plus 30-day publishing and update activity in UTC.', 'od-mcp-bridge' ),
 			array( $this, 'execute_content_summary' ),
-			array( $this, 'can_edit_posts' ),
+			array( $this, 'can_view_content_summary' ),
 			null,
 			$this->get_content_activity_schema()
 		);
@@ -660,7 +665,7 @@ final class Abilities {
 			__( 'Get WP-Cron status', 'od-mcp-bridge' ),
 			__( 'Returns sanitized scheduled event timing without event arguments.', 'od-mcp-bridge' ),
 			array( $this, 'execute_cron_status' ),
-			array( $this, 'can_manage_options' ),
+			array( $this, 'can_view_cron' ),
 			$this->get_limit_input_schema(),
 			$this->get_cron_status_schema()
 		);
@@ -673,7 +678,7 @@ final class Abilities {
 			__( 'Get maintenance snapshot', 'od-mcp-bridge' ),
 			__( 'Returns enabled maintenance sections while preserving permission and failure boundaries.', 'od-mcp-bridge' ),
 			array( $this, 'execute_maintenance_snapshot' ),
-			array( $this, 'can_manage_options' ),
+			array( $this, 'can_view_maintenance' ),
 			null,
 			$this->get_maintenance_snapshot_schema()
 		);
@@ -914,9 +919,9 @@ final class Abilities {
 
 		$items        = array();
 		$capabilities = array(
-			'core'   => 'update_core',
-			'plugin' => 'update_plugins',
-			'theme'  => 'update_themes',
+			'core'   => Role_Manager::VIEW_CORE_UPDATES,
+			'plugin' => Role_Manager::VIEW_PLUGIN_UPDATES,
+			'theme'  => Role_Manager::VIEW_THEME_UPDATES,
 		);
 		foreach ( wp_get_translation_updates() as $update ) {
 			$type = isset( $update->type ) ? sanitize_key( $update->type ) : '';

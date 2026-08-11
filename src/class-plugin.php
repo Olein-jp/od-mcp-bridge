@@ -21,6 +21,8 @@ final class Plugin {
 	 * @return void
 	 */
 	public static function boot() {
+		add_action( 'init', array( Role_Manager::class, 'maybe_install' ), 1 );
+
 		$settings  = new Settings_Page();
 		$abilities = new Abilities( $settings );
 
