@@ -3,6 +3,7 @@
 /.gitignore
 /.distignore
 /.editorconfig
+/.issue-drafts
 /.wp-env.json
 /build
 /composer.json

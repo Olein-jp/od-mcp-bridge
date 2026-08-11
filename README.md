@@ -1,11 +1,25 @@
 # OD MCP Bridge
 
-OD MCP Bridge の WordPress プラグイン開発用リポジトリです。
+OD MCP Bridge は、WordPress Abilities API で登録した機能を、公式の
+[WordPress MCP Adapter](https://github.com/WordPress/mcp-adapter) 経由で
+MCP クライアントへ安全に公開するためのプラグインです。
+
+## MVP（0.1.0）
+
+認証済みユーザーが実行できる、次の read-only Ability を提供します。
+
+- `od-mcp-bridge/get-site-info`: サイト基本情報
+- `od-mcp-bridge/get-posts`: 公開済み投稿の検索・一覧取得
+- `od-mcp-bridge/get-post`: 公開済み投稿の本文取得
+
+すべての Ability は `read` capability を要求し、下書き、非公開投稿、固定ページ、
+ユーザーの認証情報にはアクセスしません。
 
 ## 必要な環境
 
 - Docker
-- Node.js / npm
+- Node.js 22.19 以上 / npm（HTTP MCP 検証時）
+- WordPress 6.9 以上
 - PHP 7.4 以上
 - Composer 2
 
@@ -15,6 +29,7 @@ OD MCP Bridge の WordPress プラグイン開発用リポジトリです。
 composer install
 npm install
 npm run env:start
+npm run env:cli -- rewrite structure '/%postname%/' --hard
 ```
 
 WordPress は `http://localhost:8888`、管理画面は
@@ -28,6 +43,154 @@ npm run env:stop
 composer lint
 ```
 
+WordPress 管理画面の「設定 → OD MCP Bridge」では、MCP エンドポイントの確認と、
+公開する Ability の有効・無効を設定できます。初期状態では3つとも有効です。
+
+## MCP 接続
+
+HTTP エンドポイントは次のURLです。
+
+```text
+https://example.com/wp-json/mcp/mcp-adapter-default-server
+```
+
+本番環境では必ず HTTPS の endpoint を使用してください。
+
+### 専用ユーザーと Application Password
+
+1. 管理者で「ユーザー → ユーザーを追加」を開き、MCP 接続専用ユーザーを作成します。
+2. 権限グループは「購読者（Subscriber）」を選びます。購読者が持つ `read`
+   capability だけで、OD MCP Bridge の read-only Ability を利用できます。
+3. 専用ユーザーでログインし、「ユーザー → プロフィール」の「Application Passwords」で
+   `OD MCP Bridge` などの識別しやすい名前を入力して発行します。
+4. 表示された Application Password は一度だけコピーし、MCP クライアント側の
+   環境変数またはシークレットストアで管理します。WordPress の通常のログインパスワードは
+   使用しません。
+5. 接続確認を終えた場合やクライアントを廃止した場合は、同じプロフィール画面の
+   Application Passwords 一覧から該当するものを失効させます。
+
+Application Password、通常のログインパスワード、実際のユーザー名を、このプラグインの
+設定、WordPress option、リポジトリ、Issue、ログへ保存しないでください。Application
+Password の詳細は [WordPress REST API Handbook](https://developer.wordpress.org/rest-api/using-the-rest-api/authentication/#basic-authentication-with-application-passwords)
+も参照してください。
+
+### MCP クライアント設定
+
+`@automattic/mcp-wordpress-remote` を stdio MCP server として起動し、WordPress の
+HTTP endpoint へ中継します。次はサンプル値だけを含む設定例です。実際の値はローカルの
+MCP クライアント設定または、そのクライアントを起動する環境から渡してください。
+
+```json
+{
+  "mcpServers": {
+    "od-mcp-bridge": {
+      "command": "npx",
+      "args": ["-y", "@automattic/mcp-wordpress-remote@latest"],
+      "env": {
+        "WP_API_URL": "https://example.com/wp-json/mcp/mcp-adapter-default-server",
+        "WP_API_USERNAME": "mcp-reader",
+        "WP_API_PASSWORD": "<APPLICATION_PASSWORD>",
+        "OAUTH_ENABLED": "false"
+      }
+    }
+  }
+}
+```
+
+### MCP Inspector での確認
+
+シェルの環境変数へ実サイトの値を設定します。値を含むコマンドをシェル履歴へ残さない
+方法で設定してください。
+
+```bash
+export WP_API_URL='https://example.com/wp-json/mcp/mcp-adapter-default-server'
+export WP_API_USERNAME='mcp-reader'
+export WP_API_PASSWORD='<APPLICATION_PASSWORD>'
+export OAUTH_ENABLED='false'
+```
+
+以下の関数は、環境変数を MCP Inspector が起動するプロキシへ渡します。
+
+```bash
+mcp_inspector() {
+  npx -y @modelcontextprotocol/inspector@latest --cli \
+    npx @automattic/mcp-wordpress-remote@latest \
+    -e "WP_API_URL=$WP_API_URL" \
+    -e "WP_API_USERNAME=$WP_API_USERNAME" \
+    -e "WP_API_PASSWORD=$WP_API_PASSWORD" \
+    -e "OAUTH_ENABLED=$OAUTH_ENABLED" \
+    "$@"
+}
+```
+
+まず、default server の3つの MCP tool を確認します。
+
+```bash
+mcp_inspector --method tools/list
+```
+
+- `mcp-adapter-discover-abilities`
+- `mcp-adapter-get-ability-info`
+- `mcp-adapter-execute-ability`
+
+次に、公開中の Ability を検出します。結果に `od-mcp-bridge/get-site-info`、
+`od-mcp-bridge/get-posts`、`od-mcp-bridge/get-post` の3件が含まれることを確認します。
+
+```bash
+mcp_inspector \
+  --method tools/call \
+  --tool-name mcp-adapter-discover-abilities \
+  --tool-args-json '{}'
+```
+
+3つの Ability はすべて `mcp-adapter-execute-ability` から実行できます。
+`get-post` の `post_id` は実サイトに存在する公開済み投稿 ID へ置き換えてください。
+
+```bash
+mcp_inspector \
+  --method tools/call \
+  --tool-name mcp-adapter-execute-ability \
+  --tool-args-json '{"ability_name":"od-mcp-bridge/get-site-info","parameters":{}}'
+
+mcp_inspector \
+  --method tools/call \
+  --tool-name mcp-adapter-execute-ability \
+  --tool-args-json '{"ability_name":"od-mcp-bridge/get-posts","parameters":{"per_page":5}}'
+
+mcp_inspector \
+  --method tools/call \
+  --tool-name mcp-adapter-execute-ability \
+  --tool-args-json '{"ability_name":"od-mcp-bridge/get-post","parameters":{"post_id":1}}'
+```
+
+認証拒否も確認します。次のリクエストは Application Password を送らないため、HTTP
+`401` になる必要があります。
+
+```bash
+curl --include \
+  --request POST \
+  --header 'Accept: application/json, text/event-stream' \
+  --header 'Content-Type: application/json' \
+  --data '{"jsonrpc":"2.0","id":1,"method":"initialize","params":{"protocolVersion":"2025-06-18","capabilities":{},"clientInfo":{"name":"od-mcp-bridge-check","version":"1.0.0"}}}' \
+  "$WP_API_URL"
+```
+
+不正な認証情報でも確認する場合は、実際の Application Password をコマンドへ含めず、
+`--user "$WP_API_USERNAME:definitely-not-valid"` を追加して同じリクエストを送ります。
+確認後は `unset WP_API_PASSWORD` を実行してください。
+
+ローカルの wp-env では、WP-CLI の STDIO transport でも確認できます。
+
+```bash
+npm run env:cli -- mcp-adapter list
+npm run env:cli -- mcp-adapter serve \
+  --server=mcp-adapter-default-server \
+  --user=admin
+```
+
+default server では、各 Ability は個別のMCP toolとして直接列挙されません。
+`mcp-adapter-discover-abilities` で検出し、`mcp-adapter-execute-ability` から実行します。
+
 ## リリース
 
 `od-mcp-bridge.php` の `Version`、`package.json` の `version`、`readme.txt` の
@@ -35,8 +198,8 @@ composer lint
 形式（`v` 接頭辞なし）のタグを push します。
 
 ```bash
-git tag 0.0.1
-git push origin 0.0.1
+git tag 0.1.1
+git push origin 0.1.1
 ```
 
 タグとプラグインヘッダーのバージョンが一致すると、GitHub Actions が
@@ -44,5 +207,5 @@ git push origin 0.0.1
 ローカルでは次のコマンドで同じ ZIP を生成できます。
 
 ```bash
-npm run package -- 0.0.0
+npm run package -- 0.1.0
 ```

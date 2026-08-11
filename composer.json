@@ -4,8 +4,10 @@
   "type": "wordpress-plugin",
   "license": "GPL-2.0-or-later",
   "require": {
+    "automattic/jetpack-autoloader": "^5.0",
     "php": ">=7.4",
-    "inc2734/wp-github-plugin-updater": "^3.1"
+    "inc2734/wp-github-plugin-updater": "^3.1",
+    "wordpress/mcp-adapter": "^0.5.0"
   },
   "require-dev": {
     "dealerdirect/phpcodesniffer-composer-installer": "^1.0",
@@ -13,9 +15,15 @@
   },
   "config": {
     "allow-plugins": {
+      "automattic/jetpack-autoloader": true,
       "dealerdirect/phpcodesniffer-composer-installer": true
     },
     "sort-packages": true
+  },
+  "autoload": {
+    "classmap": [
+      "src/"
+    ]
   },
   "scripts": {
     "lint": "phpcs --standard=phpcs.xml.dist",

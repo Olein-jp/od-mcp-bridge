@@ -3,6 +3,7 @@
 	<description>WordPress Coding Standards for OD MCP Bridge.</description>
 
 	<file>od-mcp-bridge.php</file>
+	<file>src</file>
 
 	<exclude-pattern>*/vendor/*</exclude-pattern>
 	<exclude-pattern>*/node_modules/*</exclude-pattern>
