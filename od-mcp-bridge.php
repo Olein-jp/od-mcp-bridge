@@ -2,7 +2,7 @@
 /**
  * Plugin Name:       OD MCP Bridge
  * Description:       Safely exposes selected WordPress abilities to MCP clients.
- * Version:           0.1.0
+ * Version:           0.2.0
  * Requires at least: 6.9
  * Requires PHP:      7.4
  * Author:            Koji Kuno
@@ -19,7 +19,7 @@ defined( 'ABSPATH' ) || exit;
 
 require_once __DIR__ . '/vendor/autoload_packages.php';
 
-define( 'OD_MCP_BRIDGE_VERSION', '0.1.0' );
+define( 'OD_MCP_BRIDGE_VERSION', '0.2.0' );
 
 /**
  * Initializes the plugin.

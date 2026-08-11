@@ -7,16 +7,27 @@ MCP クライアントへ安全に公開するためのプラグインです。
 実サイトへのインストールから MCP クライアントでの確認、各 Ability の入力項目、
 トラブル対応までの詳しい手順は、[利用マニュアル](docs/user-manual.md)を参照してください。
 
-## MVP（0.1.0）
+## 提供する Ability
 
-認証済みユーザーが実行できる、次の read-only Ability を提供します。
+すべて読み取り専用です。初期状態では、公開情報を扱う次の6件が有効です。
 
 - `od-mcp-bridge/get-site-info`: サイト基本情報
-- `od-mcp-bridge/get-posts`: 公開済み投稿の検索・一覧取得
-- `od-mcp-bridge/get-post`: 公開済み投稿の本文取得
+- `od-mcp-bridge/get-posts` / `get-post`: 公開済み投稿の一覧・本文
+- `od-mcp-bridge/get-pages` / `get-page`: 公開済み固定ページの一覧・本文
+- `od-mcp-bridge/get-terms`: カテゴリーまたはタグの一覧
 
-すべての Ability は `read` capability を要求し、下書き、非公開投稿、固定ページ、
-ユーザーの認証情報にはアクセスしません。
+保守情報を扱う次の8件は初期状態で無効です。管理画面で必要なものだけを有効にし、
+各 Ability が要求する権限を持つ専用ユーザーで利用してください。
+
+- `get-update-status`: キャッシュ済み更新状況
+- `get-plugins` / `get-themes`: サニタイズ済みプラグイン・テーマ情報
+- `get-site-health`: 外部通信を伴わない限定的なサイトヘルス結果
+- `get-content-summary` / `get-stale-content`: コンテンツ活動・長期未更新コンテンツ
+- `get-cron-status`: 引数を除外した WP-Cron 状況
+- `get-maintenance-snapshot`: 上記の保守情報を権限境界付きで集約
+
+下書きや非公開コンテンツ、ユーザー情報、認証情報、ファイルパス、Cron 引数は返しません。
+詳細な権限と入出力は[利用マニュアル](docs/user-manual.md#ability-一覧と必要権限)を参照してください。
 
 ## 必要な環境
 
@@ -57,11 +68,11 @@ composer lint
 ```
 
 `composer test:integration` は wp-env の `tests-cli` コンテナで PHPUnit を実行します。
-テストでは WordPress 6.9以上、Ability の登録とスキーマ、権限、公開済み投稿だけを返すこと、
-検索とページング、設定による無効化を確認します。
+テストでは WordPress 6.9以上、Ability の登録とスキーマ、権限、公開コンテンツの絞り込み、
+保守情報のサニタイズ、設定による無効化、保守スナップショットの失敗分離を確認します。
 
 WordPress 管理画面の「設定 → OD MCP Bridge」では、MCP エンドポイントの確認と、
-公開する Ability の有効・無効を設定できます。初期状態では3つとも有効です。
+公開する Ability の有効・無効を設定できます。初期状態では公開情報を扱う6件だけが有効です。
 
 ## MCP 接続
 
@@ -76,8 +87,8 @@ https://example.com/wp-json/mcp/mcp-adapter-default-server
 ### 専用ユーザーと Application Password
 
 1. 管理者で「ユーザー → ユーザーを追加」を開き、MCP 接続専用ユーザーを作成します。
-2. 権限グループは「購読者（Subscriber）」を選びます。購読者が持つ `read`
-   capability だけで、OD MCP Bridge の read-only Ability を利用できます。
+2. 公開コンテンツ系だけを使う場合、権限グループは「購読者（Subscriber）」を選びます。
+   保守系を使う場合は、必要な capability を持つ専用ロールを用意してください。
 3. 専用ユーザーでログインし、「ユーザー → プロフィール」の「Application Passwords」で
    `OD MCP Bridge` などの識別しやすい名前を入力して発行します。
 4. 表示された Application Password は一度だけコピーし、MCP クライアント側の
@@ -150,8 +161,8 @@ mcp_inspector --method tools/list
 - `mcp-adapter-get-ability-info`
 - `mcp-adapter-execute-ability`
 
-次に、公開中の Ability を検出します。結果に `od-mcp-bridge/get-site-info`、
-`od-mcp-bridge/get-posts`、`od-mcp-bridge/get-post` の3件が含まれることを確認します。
+次に、公開中の Ability を検出します。初期設定では、サイト情報、投稿、固定ページ、
+カテゴリー・タグを扱う6件が含まれることを確認します。
 
 ```bash
 mcp_inspector \
@@ -160,7 +171,7 @@ mcp_inspector \
   --tool-args-json '{}'
 ```
 
-3つの Ability はすべて `mcp-adapter-execute-ability` から実行できます。
+検出された Ability はすべて `mcp-adapter-execute-ability` から実行できます。
 `get-post` の `post_id` は実サイトに存在する公開済み投稿 ID へ置き換えてください。
 
 ```bash
@@ -178,6 +189,21 @@ mcp_inspector \
   --method tools/call \
   --tool-name mcp-adapter-execute-ability \
   --tool-args-json '{"ability_name":"od-mcp-bridge/get-post","parameters":{"post_id":1}}'
+
+mcp_inspector \
+  --method tools/call \
+  --tool-name mcp-adapter-execute-ability \
+  --tool-args-json '{"ability_name":"od-mcp-bridge/get-pages","parameters":{"per_page":5}}'
+
+mcp_inspector \
+  --method tools/call \
+  --tool-name mcp-adapter-execute-ability \
+  --tool-args-json '{"ability_name":"od-mcp-bridge/get-page","parameters":{"page_id":2}}'
+
+mcp_inspector \
+  --method tools/call \
+  --tool-name mcp-adapter-execute-ability \
+  --tool-args-json '{"ability_name":"od-mcp-bridge/get-terms","parameters":{"taxonomy":"category","per_page":20}}'
 ```
 
 認証拒否も確認します。次のリクエストは Application Password を送らないため、HTTP
@@ -224,5 +250,5 @@ git push origin 0.1.1
 ローカルでは次のコマンドで同じ ZIP を生成できます。
 
 ```bash
-npm run package -- 0.1.0
+npm run package -- 0.2.0
 ```

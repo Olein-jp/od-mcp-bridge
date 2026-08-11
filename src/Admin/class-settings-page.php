@@ -37,6 +37,31 @@ final class Settings_Page {
 		'get-site-info',
 		'get-posts',
 		'get-post',
+		'get-pages',
+		'get-page',
+		'get-terms',
+		'get-update-status',
+		'get-plugins',
+		'get-themes',
+		'get-site-health',
+		'get-content-summary',
+		'get-stale-content',
+		'get-cron-status',
+		'get-maintenance-snapshot',
+	);
+
+	/**
+	 * Abilities enabled by default.
+	 *
+	 * @var array<int, string>
+	 */
+	private $default_enabled_abilities = array(
+		'get-site-info',
+		'get-posts',
+		'get-post',
+		'get-pages',
+		'get-page',
+		'get-terms',
 	);
 
 	/**
@@ -203,7 +228,7 @@ final class Settings_Page {
 	public function render_abilities_description() {
 		printf(
 			'<p>%s</p>',
-			esc_html__( 'Only enabled abilities are registered and exposed. All MVP abilities are read-only and require the WordPress read capability.', 'od-mcp-bridge' )
+			esc_html__( 'Only enabled abilities are registered and exposed. Public content abilities are enabled by default; maintenance abilities are disabled by default and require elevated WordPress capabilities.', 'od-mcp-bridge' )
 		);
 	}
 
@@ -251,8 +276,14 @@ final class Settings_Page {
 	 * @return array<string, array<string, bool>>
 	 */
 	private function get_defaults() {
+		$defaults = array_fill_keys( $this->abilities, false );
+
+		foreach ( $this->default_enabled_abilities as $key ) {
+			$defaults[ $key ] = true;
+		}
+
 		return array(
-			'abilities' => array_fill_keys( $this->abilities, true ),
+			'abilities' => $defaults,
 		);
 	}
 
@@ -264,9 +295,20 @@ final class Settings_Page {
 	 */
 	private function get_ability_label( $key ) {
 		$labels = array(
-			'get-site-info' => __( 'Site information', 'od-mcp-bridge' ),
-			'get-posts'     => __( 'Published post list', 'od-mcp-bridge' ),
-			'get-post'      => __( 'Published post content', 'od-mcp-bridge' ),
+			'get-site-info'            => __( 'Site information', 'od-mcp-bridge' ),
+			'get-posts'                => __( 'Published post list', 'od-mcp-bridge' ),
+			'get-post'                 => __( 'Published post content', 'od-mcp-bridge' ),
+			'get-pages'                => __( 'Published page list', 'od-mcp-bridge' ),
+			'get-page'                 => __( 'Published page content', 'od-mcp-bridge' ),
+			'get-terms'                => __( 'Categories and tags', 'od-mcp-bridge' ),
+			'get-update-status'        => __( 'Update status (maintenance)', 'od-mcp-bridge' ),
+			'get-plugins'              => __( 'Plugin inventory (maintenance)', 'od-mcp-bridge' ),
+			'get-themes'               => __( 'Theme inventory (maintenance)', 'od-mcp-bridge' ),
+			'get-site-health'          => __( 'Site Health summary (maintenance)', 'od-mcp-bridge' ),
+			'get-content-summary'      => __( 'Content summary (maintenance)', 'od-mcp-bridge' ),
+			'get-stale-content'        => __( 'Stale content (maintenance)', 'od-mcp-bridge' ),
+			'get-cron-status'          => __( 'WP-Cron status (maintenance)', 'od-mcp-bridge' ),
+			'get-maintenance-snapshot' => __( 'Maintenance snapshot (maintenance)', 'od-mcp-bridge' ),
 		);
 
 		return isset( $labels[ $key ] ) ? $labels[ $key ] : $key;
