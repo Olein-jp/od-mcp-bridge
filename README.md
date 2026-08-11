@@ -72,7 +72,9 @@ composer lint
 保守情報のサニタイズ、設定による無効化、保守スナップショットの失敗分離を確認します。
 
 WordPress 管理画面の「設定 → OD MCP Bridge」では、MCP エンドポイントの確認と、
-公開する Ability の有効・無効を設定できます。初期状態では公開情報を扱う6件だけが有効です。
+公開する Ability の有効・無効を設定できます。接続診断では、HTTPS、Application Password、
+MCP Adapter、専用ロール、Abilityごとの必要capabilityを外部通信なしで確認できます。
+初期状態では公開情報を扱う6件だけが有効です。
 
 ## MCP 接続
 

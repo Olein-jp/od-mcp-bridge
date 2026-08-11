@@ -104,4 +104,54 @@ final class Role_Manager {
 			self::VIEW_MAINTENANCE,
 		);
 	}
+
+	/**
+	 * Returns the capability policy for every plugin ability.
+	 *
+	 * @return array<string, array{capabilities: array<int, string>, match: string}>
+	 */
+	public static function get_ability_requirements() {
+		$read = array(
+			'capabilities' => array( 'read' ),
+			'match'        => 'all',
+		);
+
+		return array(
+			'get-site-info'            => $read,
+			'get-posts'                => $read,
+			'get-post'                 => $read,
+			'get-pages'                => $read,
+			'get-page'                 => $read,
+			'get-terms'                => $read,
+			'get-update-status'        => array(
+				'capabilities' => array( self::VIEW_CORE_UPDATES, self::VIEW_PLUGIN_UPDATES, self::VIEW_THEME_UPDATES ),
+				'match'        => 'any',
+			),
+			'get-plugins'              => array(
+				'capabilities' => array( self::VIEW_PLUGINS ),
+				'match'        => 'all',
+			),
+			'get-themes'               => array(
+				'capabilities' => array( self::VIEW_THEMES ),
+				'match'        => 'all',
+			),
+			'get-site-health'          => array(
+				'capabilities' => array( self::VIEW_SITE_HEALTH ),
+				'match'        => 'all',
+			),
+			'get-content-summary'      => array(
+				'capabilities' => array( self::VIEW_CONTENT ),
+				'match'        => 'all',
+			),
+			'get-stale-content'        => $read,
+			'get-cron-status'          => array(
+				'capabilities' => array( self::VIEW_CRON ),
+				'match'        => 'all',
+			),
+			'get-maintenance-snapshot' => array(
+				'capabilities' => array( self::VIEW_MAINTENANCE ),
+				'match'        => 'all',
+			),
+		);
+	}
 }

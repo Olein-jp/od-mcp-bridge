@@ -258,6 +258,21 @@ https://example.com/wp-json/mcp/mcp-adapter-default-server
 
 本番サイトでは、必ず `https://` から始まる URL を利用してください。
 
+### 4. 接続診断を確認する
+
+同じ画面の「Connection diagnostics」では、次の項目をWordPress内部だけで確認できます。
+
+- WordPress MCP Adapterの読み込み状態
+- WordPressとPHPの最低バージョン
+- HTTPSとApplication Passwordの利用可否
+- パーマリンク設定
+- MCP Maintenance Readerロールの最小権限
+- 有効なAbility数と、Abilityごとの必要capability
+
+「Ready」以外の項目がある場合はDetailsの説明を確認してください。この診断は外部のMCPクライアントへ
+接続せず、ユーザー名やApplication Passwordも入力・保存しません。実際の認証を含む疎通確認は、
+後述のMCP Inspectorの手順で行います。
+
 ## 公開する Ability を設定する
 
 「設定」→「OD MCP Bridge」では、MCP クライアントへ公開する Ability を個別に切り替えられます。

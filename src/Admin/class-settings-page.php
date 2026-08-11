@@ -158,6 +158,15 @@ final class Settings_Page {
 	}
 
 	/**
+	 * Returns supported ability keys.
+	 *
+	 * @return array<int, string>
+	 */
+	public function get_ability_keys() {
+		return $this->abilities;
+	}
+
+	/**
 	 * Renders the settings page.
 	 *
 	 * @return void
@@ -185,6 +194,8 @@ final class Settings_Page {
 					</tr>
 				</tbody>
 			</table>
+
+			<?php $this->render_connection_diagnostics(); ?>
 
 			<p class="description">
 				<?php esc_html_e( 'Use a dedicated Subscriber for public content, or the MCP Maintenance Reader role for maintenance abilities. Store credentials only in the MCP client environment; this plugin never stores them.', 'od-mcp-bridge' ); ?>
@@ -220,6 +231,83 @@ final class Settings_Page {
 		<?php
 	}
 
+	/** Renders read-only connection and permission diagnostics. */
+	private function render_connection_diagnostics() {
+		$diagnostics = new Connection_Diagnostics( $this );
+		?>
+		<h2><?php esc_html_e( 'Connection diagnostics', 'od-mcp-bridge' ); ?></h2>
+		<p class="description">
+			<?php esc_html_e( 'These checks inspect local WordPress configuration only. They do not send an external request or store credentials.', 'od-mcp-bridge' ); ?>
+		</p>
+		<table class="widefat striped">
+			<thead>
+				<tr>
+					<th scope="col"><?php esc_html_e( 'Check', 'od-mcp-bridge' ); ?></th>
+					<th scope="col"><?php esc_html_e( 'Status', 'od-mcp-bridge' ); ?></th>
+					<th scope="col"><?php esc_html_e( 'Details', 'od-mcp-bridge' ); ?></th>
+				</tr>
+			</thead>
+			<tbody>
+				<?php foreach ( $diagnostics->get_checks() as $check ) : ?>
+					<tr>
+						<th scope="row"><?php echo esc_html( $check['label'] ); ?></th>
+						<td><strong><?php echo esc_html( $this->get_diagnostic_status_label( $check['status'] ) ); ?></strong></td>
+						<td><?php echo esc_html( $check['message'] ); ?></td>
+					</tr>
+				<?php endforeach; ?>
+			</tbody>
+		</table>
+
+		<h3><?php esc_html_e( 'Ability access', 'od-mcp-bridge' ); ?></h3>
+		<table class="widefat striped">
+			<thead>
+				<tr>
+					<th scope="col"><?php esc_html_e( 'Ability', 'od-mcp-bridge' ); ?></th>
+					<th scope="col"><?php esc_html_e( 'Setting', 'od-mcp-bridge' ); ?></th>
+					<th scope="col"><?php esc_html_e( 'Required capability', 'od-mcp-bridge' ); ?></th>
+					<th scope="col"><?php esc_html_e( 'MCP Maintenance Reader', 'od-mcp-bridge' ); ?></th>
+				</tr>
+			</thead>
+			<tbody>
+				<?php foreach ( $diagnostics->get_ability_access() as $ability ) : ?>
+					<tr>
+						<th scope="row"><code><?php echo esc_html( 'od-mcp-bridge/' . $ability['key'] ); ?></code></th>
+						<td><?php echo $ability['enabled'] ? esc_html__( 'Enabled', 'od-mcp-bridge' ) : esc_html__( 'Disabled', 'od-mcp-bridge' ); ?></td>
+						<td>
+							<?php foreach ( $ability['capabilities'] as $index => $capability ) : ?>
+								<?php if ( $index > 0 ) : ?>
+									<span aria-hidden="true">, </span>
+								<?php endif; ?>
+								<code><?php echo esc_html( $capability ); ?></code>
+							<?php endforeach; ?>
+							<?php if ( 'any' === $ability['match'] ) : ?>
+								<?php esc_html_e( ' (any)', 'od-mcp-bridge' ); ?>
+							<?php endif; ?>
+						</td>
+						<td><?php echo $ability['role_access'] ? esc_html__( 'Allowed', 'od-mcp-bridge' ) : esc_html__( 'Not allowed', 'od-mcp-bridge' ); ?></td>
+					</tr>
+				<?php endforeach; ?>
+			</tbody>
+		</table>
+		<?php
+	}
+
+	/**
+	 * Returns a translated diagnostic status label.
+	 *
+	 * @param string $status Diagnostic status.
+	 * @return string
+	 */
+	private function get_diagnostic_status_label( $status ) {
+		$labels = array(
+			'good'    => __( 'Ready', 'od-mcp-bridge' ),
+			'warning' => __( 'Check', 'od-mcp-bridge' ),
+			'error'   => __( 'Action required', 'od-mcp-bridge' ),
+		);
+
+		return isset( $labels[ $status ] ) ? $labels[ $status ] : $status;
+	}
+
 	/**
 	 * Renders explanatory text for the abilities section.
 	 *
@@ -228,7 +316,7 @@ final class Settings_Page {
 	public function render_abilities_description() {
 		printf(
 			'<p>%s</p>',
-			esc_html__( 'Only enabled abilities are registered and exposed. Public content abilities are enabled by default; maintenance abilities are disabled by default and require elevated WordPress capabilities.', 'od-mcp-bridge' )
+			esc_html__( 'Only enabled abilities are registered and exposed. Public content abilities are enabled by default; maintenance abilities are disabled by default and require the dedicated read-only MCP capabilities.', 'od-mcp-bridge' )
 		);
 	}
 
