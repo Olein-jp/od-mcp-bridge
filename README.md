@@ -16,7 +16,7 @@ MCP クライアントへ安全に公開するためのプラグインです。
 - `od-mcp-bridge/get-pages` / `get-page`: 公開済み固定ページの一覧・本文
 - `od-mcp-bridge/get-terms`: カテゴリーまたはタグの一覧
 
-保守情報を扱う次の8件は初期状態で無効です。管理画面で必要なものだけを有効にし、
+保守情報を扱う次の9件は初期状態で無効です。管理画面で必要なものだけを有効にし、
 各 Ability が要求する権限を持つ専用ユーザーで利用してください。
 
 - `get-update-status`: キャッシュ済み更新状況
@@ -25,6 +25,7 @@ MCP クライアントへ安全に公開するためのプラグインです。
 - `get-content-summary` / `get-stale-content`: コンテンツ活動・長期未更新コンテンツ
 - `get-cron-status`: 引数を除外した WP-Cron 状況
 - `get-maintenance-snapshot`: 上記の保守情報を権限境界付きで集約
+- `get-security-posture`: 外部通信や認証情報の取得を行わないセキュリティ設定要約
 
 下書きや非公開コンテンツ、ユーザー情報、認証情報、ファイルパス、Cron 引数は返しません。
 詳細な権限と入出力は[利用マニュアル](docs/user-manual.md#ability-一覧と必要権限)を参照してください。
@@ -69,7 +70,8 @@ composer lint
 
 `composer test:integration` は wp-env の `tests-cli` コンテナで PHPUnit を実行します。
 テストでは WordPress 6.9以上、Ability の登録とスキーマ、権限、公開コンテンツの絞り込み、
-保守情報のサニタイズ、設定による無効化、保守スナップショットの失敗分離を確認します。
+保守情報のサニタイズ、設定による無効化、保守スナップショットの失敗分離、
+セキュリティ設定要約の権限・情報漏えい・外部通信禁止を確認します。
 
 WordPress 管理画面の「設定 → OD MCP Bridge」では、MCP エンドポイントの確認と、
 公開する Ability の有効・無効を設定できます。接続診断では、HTTPS、Application Password、

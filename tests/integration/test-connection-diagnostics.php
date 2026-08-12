@@ -28,7 +28,7 @@ class Test_OD_MCP_Bridge_Connection_Diagnostics extends WP_UnitTestCase {
 		$this->assertSame( 'good', $checks['wordpress_version']['status'] );
 		$this->assertSame( 'good', $checks['php_version']['status'] );
 		$this->assertSame( 'good', $checks['maintenance_role']['status'] );
-		$this->assertStringContainsString( '6 of 14', $checks['enabled_abilities']['message'] );
+		$this->assertStringContainsString( '6 of 15', $checks['enabled_abilities']['message'] );
 		$this->assertStringNotContainsString( 'password=', strtolower( wp_json_encode( $checks ) ) );
 	}
 
@@ -47,8 +47,8 @@ class Test_OD_MCP_Bridge_Connection_Diagnostics extends WP_UnitTestCase {
 	public function test_get_ability_access_covers_every_ability() {
 		$rows = ( new Connection_Diagnostics( new Settings_Page() ) )->get_ability_access();
 
-		$this->assertCount( 14, $rows );
+		$this->assertCount( 15, $rows );
 		$this->assertCount( 6, wp_list_filter( $rows, array( 'enabled' => true ) ) );
-		$this->assertCount( 14, wp_list_filter( $rows, array( 'role_access' => true ) ) );
+		$this->assertCount( 15, wp_list_filter( $rows, array( 'role_access' => true ) ) );
 	}
 }

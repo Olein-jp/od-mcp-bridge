@@ -19,7 +19,7 @@ final class Role_Manager {
 	const OPTION_NAME = 'od_mcp_bridge_role_schema_version';
 
 	/** Current role schema version. */
-	const SCHEMA_VERSION = '1';
+	const SCHEMA_VERSION = '2';
 
 	/** Custom maintenance capabilities. */
 	const VIEW_CORE_UPDATES   = 'od_mcp_bridge_view_core_updates';
@@ -31,6 +31,7 @@ final class Role_Manager {
 	const VIEW_CONTENT        = 'od_mcp_bridge_view_content_summary';
 	const VIEW_CRON           = 'od_mcp_bridge_view_cron';
 	const VIEW_MAINTENANCE    = 'od_mcp_bridge_view_maintenance';
+	const VIEW_SECURITY       = 'od_mcp_bridge_view_security';
 
 	/** Installs or upgrades the role schema when needed. */
 	public static function maybe_install() {
@@ -102,6 +103,7 @@ final class Role_Manager {
 			self::VIEW_CONTENT,
 			self::VIEW_CRON,
 			self::VIEW_MAINTENANCE,
+			self::VIEW_SECURITY,
 		);
 	}
 
@@ -150,6 +152,10 @@ final class Role_Manager {
 			),
 			'get-maintenance-snapshot' => array(
 				'capabilities' => array( self::VIEW_MAINTENANCE ),
+				'match'        => 'all',
+			),
+			'get-security-posture'     => array(
+				'capabilities' => array( self::VIEW_SECURITY ),
 				'match'        => 'all',
 			),
 		);

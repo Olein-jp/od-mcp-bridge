@@ -70,6 +70,7 @@ final class Abilities {
 			'get-stale-content'        => 'register_stale_content',
 			'get-cron-status'          => 'register_cron_status',
 			'get-maintenance-snapshot' => 'register_maintenance_snapshot',
+			'get-security-posture'     => 'register_security_posture',
 		);
 
 		foreach ( $registrations as $key => $method ) {
@@ -478,6 +479,11 @@ final class Abilities {
 		return $result;
 	}
 
+	/** Returns a bounded local security configuration summary. */
+	public function execute_security_posture() {
+		return ( new Security_Posture() )->get_report();
+	}
+
 	/** Checks the current user's read capability. */
 	public function can_read() {
 		return current_user_can( 'read' );
@@ -496,6 +502,11 @@ final class Abilities {
 	/** Checks the current user's maintenance snapshot capability. */
 	public function can_view_maintenance() {
 		return current_user_can( Role_Manager::VIEW_MAINTENANCE );
+	}
+
+	/** Checks the current user's security posture capability. */
+	public function can_view_security() {
+		return current_user_can( Role_Manager::VIEW_SECURITY );
 	}
 
 	/** Checks the current user's Site Health capability. */
@@ -681,6 +692,19 @@ final class Abilities {
 			array( $this, 'can_view_maintenance' ),
 			null,
 			$this->get_maintenance_snapshot_schema()
+		);
+	}
+
+	/** Registers the local security posture summary. */
+	private function register_security_posture() {
+		$this->register_readonly_ability(
+			'get-security-posture',
+			__( 'Get security posture', 'od-mcp-bridge' ),
+			__( 'Returns a bounded local configuration summary without credentials, internal paths, or external requests.', 'od-mcp-bridge' ),
+			array( $this, 'execute_security_posture' ),
+			array( $this, 'can_view_security' ),
+			null,
+			$this->get_security_posture_schema()
 		);
 	}
 
@@ -1400,6 +1424,104 @@ final class Abilities {
 				),
 			),
 			array( 'generated_at', 'status', 'counts', 'tests' )
+		);
+	}
+
+	/** Returns the security posture output schema. */
+	private function get_security_posture_schema() {
+		$status = array(
+			'type' => 'string',
+			'enum' => array( 'good', 'recommended', 'attention', 'unknown' ),
+		);
+		$base   = array(
+			'status'  => $status,
+			'summary' => array( 'type' => 'string' ),
+		);
+
+		return $this->object_schema(
+			array(
+				'generated_at'          => array( 'type' => 'string' ),
+				'status'                => $status,
+				'environment'           => array(
+					'type' => 'string',
+					'enum' => array( 'local', 'development', 'staging', 'production' ),
+				),
+				'https'                 => $this->object_schema(
+					array_merge(
+						$base,
+						array(
+							'using_https'    => array( 'type' => 'boolean' ),
+							'support_status' => array(
+								'type' => 'string',
+								'enum' => array( 'confirmed_by_configuration', 'not_checked' ),
+							),
+						)
+					),
+					array( 'status', 'summary', 'using_https', 'support_status' )
+				),
+				'core_updates'          => $this->object_schema(
+					array_merge(
+						$base,
+						array(
+							'state' => array(
+								'type' => 'string',
+								'enum' => array( 'up_to_date', 'update_available', 'unknown' ),
+							),
+						)
+					),
+					array( 'status', 'summary', 'state' )
+				),
+				'debug'                 => $this->object_schema(
+					array_merge(
+						$base,
+						array_fill_keys( array( 'enabled', 'display_enabled', 'log_enabled' ), array( 'type' => 'boolean' ) )
+					),
+					array( 'status', 'summary', 'enabled', 'display_enabled', 'log_enabled' )
+				),
+				'file_editing'          => $this->object_schema(
+					array_merge(
+						$base,
+						array_fill_keys( array( 'editor_allowed', 'modifications_allowed' ), array( 'type' => 'boolean' ) )
+					),
+					array( 'status', 'summary', 'editor_allowed', 'modifications_allowed' )
+				),
+				'automatic_updates'     => $this->object_schema(
+					array_merge(
+						$base,
+						array(
+							'updater_enabled'            => array( 'type' => 'boolean' ),
+							'minor_core_updates_allowed' => array( 'type' => 'boolean' ),
+							'plugin_theme_configuration' => array(
+								'type' => 'string',
+								'enum' => array( 'good', 'issues_detected', 'unknown' ),
+							),
+							'previous_failure'           => array( 'type' => 'boolean' ),
+						)
+					),
+					array( 'status', 'summary', 'updater_enabled', 'minor_core_updates_allowed', 'plugin_theme_configuration', 'previous_failure' )
+				),
+				'administrators'        => $this->object_schema(
+					array_merge(
+						$base,
+						array(
+							'count' => array( 'type' => 'integer' ),
+							'scope' => array(
+								'type' => 'string',
+								'enum' => array( 'current_site' ),
+							),
+						)
+					),
+					array( 'status', 'summary', 'count', 'scope' )
+				),
+				'application_passwords' => $this->object_schema(
+					array_merge(
+						$base,
+						array_fill_keys( array( 'globally_available', 'available_for_current_user' ), array( 'type' => 'boolean' ) )
+					),
+					array( 'status', 'summary', 'globally_available', 'available_for_current_user' )
+				),
+			),
+			array( 'generated_at', 'status', 'environment', 'https', 'core_updates', 'debug', 'file_editing', 'automatic_updates', 'administrators', 'application_passwords' )
 		);
 	}
 

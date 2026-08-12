@@ -48,6 +48,7 @@ final class Settings_Page {
 		'get-stale-content',
 		'get-cron-status',
 		'get-maintenance-snapshot',
+		'get-security-posture',
 	);
 
 	/**
@@ -397,6 +398,7 @@ final class Settings_Page {
 			'get-stale-content'        => __( 'Stale content (maintenance)', 'od-mcp-bridge' ),
 			'get-cron-status'          => __( 'WP-Cron status (maintenance)', 'od-mcp-bridge' ),
 			'get-maintenance-snapshot' => __( 'Maintenance snapshot (maintenance)', 'od-mcp-bridge' ),
+			'get-security-posture'     => __( 'Security posture summary (maintenance)', 'od-mcp-bridge' ),
 		);
 
 		return isset( $labels[ $key ] ) ? $labels[ $key ] : $key;

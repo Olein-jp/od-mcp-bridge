@@ -34,6 +34,7 @@ class Test_OD_MCP_Bridge_Abilities extends WP_UnitTestCase {
 		'od-mcp-bridge/get-stale-content',
 		'od-mcp-bridge/get-cron-status',
 		'od-mcp-bridge/get-maintenance-snapshot',
+		'od-mcp-bridge/get-security-posture',
 	);
 
 	/**
@@ -229,6 +230,7 @@ class Test_OD_MCP_Bridge_Abilities extends WP_UnitTestCase {
 			'get-stale-content',
 			'get-cron-status',
 			'get-maintenance-snapshot',
+			'get-security-posture',
 		);
 		$this->enable_abilities( $maintenance_keys );
 
@@ -373,6 +375,53 @@ class Test_OD_MCP_Bridge_Abilities extends WP_UnitTestCase {
 		$this->assertGreaterThanOrEqual( 1, $cron['overdue_events'] );
 		$this->assertGreaterThanOrEqual( 1, $cron['duplicate_candidates'] );
 		$this->assertStringNotContainsString( 'secret', wp_json_encode( $cron ) );
+	}
+
+	/** Confirms security posture is local, schema-safe, and omits sensitive values. */
+	public function test_security_posture_is_local_and_sanitized() {
+		$this->enable_abilities( array( 'get-security-posture' ) );
+		$user_id = self::factory()->user->create(
+			array(
+				'role'       => Role_Manager::ROLE,
+				'user_email' => 'security-posture-secret@example.test',
+				'user_login' => 'security-posture-secret-user',
+			)
+		);
+		wp_set_current_user( $user_id );
+
+		$password = WP_Application_Passwords::create_new_application_password(
+			$user_id,
+			array( 'name' => 'Security Posture Secret Client' )
+		);
+		$this->assertIsArray( $password );
+
+		$http_requests = 0;
+		$block_http    = static function () use ( &$http_requests ) {
+			++$http_requests;
+
+			return new WP_Error( 'unexpected_http_request', 'Security posture must not use HTTP.' );
+		};
+		add_filter( 'pre_http_request', $block_http, 10, 3 );
+
+		try {
+			$ability = wp_get_ability( 'od-mcp-bridge/get-security-posture' );
+			$result  = $ability->execute();
+		} finally {
+			remove_filter( 'pre_http_request', $block_http, 10 );
+		}
+
+		$this->assertIsArray( $result );
+		$this->assertSame( 0, $http_requests );
+		$this->assertContains( $result['status'], array( 'good', 'recommended', 'attention', 'unknown' ), true );
+		$this->assertSame( 'current_site', $result['administrators']['scope'] );
+		$this->assertArrayHasKey( 'available_for_current_user', $result['application_passwords'] );
+		$this->assertArrayNotHasKey( 'count', $result['application_passwords'] );
+
+		$encoded = wp_json_encode( $result );
+		$this->assertStringNotContainsString( 'security-posture-secret', $encoded );
+		$this->assertStringNotContainsString( 'Security Posture Secret Client', $encoded );
+		$this->assertStringNotContainsString( ABSPATH, $encoded );
+		$this->assertStringNotContainsString( $password[0], $encoded );
 	}
 
 	/** Confirms the snapshot respects disabled sections and reuses abilities. */

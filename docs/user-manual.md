@@ -46,7 +46,7 @@ HTTP プロキシを介して WordPress サイトへ接続します。
 ## できることと、できないこと
 
 Ability は、WordPress 側で実行できる個別の機能を表します。公開コンテンツ系6件と、
-サイト保守系8件を利用できます。保守系は初期状態で無効です。
+サイト保守系9件を利用できます。保守系は初期状態で無効です。
 
 ## Ability 一覧と必要権限
 
@@ -64,6 +64,7 @@ Ability は、WordPress 側で実行できる個別の機能を表します。�
 | `get-stale-content` | 長期間更新されていない公開コンテンツ | `read` | 無効 |
 | `get-cron-status` | WP-Cron の実行予定 | `od_mcp_bridge_view_cron` | 無効 |
 | `get-maintenance-snapshot` | 保守情報の集約結果 | `od_mcp_bridge_view_maintenance` | 無効 |
+| `get-security-posture` | セキュリティ設定の要約 | `od_mcp_bridge_view_security` | 無効 |
 
 保守系の独自 capability は、プラグインが作成する「MCP Maintenance Reader」ロールと
 管理者ロールへ付与されます。この専用ロールにはプラグイン有効化、テーマ変更、設定変更などの
@@ -210,6 +211,21 @@ schedule の組み合わせを重複候補として数えますが、秘密情�
 Codex はサイト基本情報、更新、Site Health、プラグイン、テーマ、コンテンツ、Cron を
 セクションごとに整理します。個別 Ability が無効、権限不足、実行失敗の場合、そのセクションを
 `unavailable` と理由コードで示し、取得できた他のセクションはそのまま返します。
+
+### 15. セキュリティ設定を確認する：`get-security-posture`
+
+HTTPS、WordPress更新、debug、ファイル編集、自動更新、管理者人数、Application Passwordの
+設定状態を、外部通信なしで確認します。
+
+> WordPressサイトのセキュリティ設定を確認し、`attention`、`recommended`、`unknown` の順に対応候補を説明してください。確認できないことは推測しないでください。
+
+Codex は「Core更新がキャッシュ上で利用可能」「本番環境でdebug表示が有効」「ファイルエディターが
+利用可能」などの観測結果を重要度順に整理します。結果は設定状態の要約であり、脆弱性診断や
+「安全である」という保証ではありません。
+
+Application Passwordは利用可能かどうかだけを確認します。件数、名称、UUID、ハッシュ、
+利用日時、IPアドレスは取得しません。管理者についても現在サイトの人数だけを返し、ユーザー名、
+メールアドレス、ユーザーIDは返しません。
 
 すべて読み取り専用です。次の情報や操作は対象に含まれません。
 
@@ -470,6 +486,16 @@ mcp_inspector \
   --tool-args-json '{"ability_name":"od-mcp-bridge/get-maintenance-snapshot","parameters":{}}'
 ```
 
+セキュリティ設定要約を使う場合は、管理画面で `get-security-posture` を有効にしてから、
+同じ専用ユーザーで実行します。
+
+```bash
+mcp_inspector \
+  --method tools/call \
+  --tool-name mcp-adapter-execute-ability \
+  --tool-args-json '{"ability_name":"od-mcp-bridge/get-security-posture","parameters":{}}'
+```
+
 確認が終わったら、少なくともパスワードの環境変数を削除してください。
 
 ```bash
@@ -621,6 +647,25 @@ UTC 基準で返します。個別コンテンツの本文は含みません。
 各セクションは、対象 Ability が有効で権限を満たせば `available` とデータを返し、無効・権限不足・
 実行エラーの場合は `unavailable` と理由を返します。あるセクションの失敗で全体が失敗しないため、
 定期的な保守確認の入口として利用できます。必要なセクションの Ability も個別に有効化してください。
+
+### `od-mcp-bridge/get-security-posture`
+
+入力はありません。`generated_at`、全体状態、WordPressのenvironment typeと、次の項目を返します。
+
+- HTTPSの設定状態。HTTPSサーバー対応可否を調べる外部リクエストは実行しません
+- キャッシュ済みWordPress Core更新状態
+- debug、debug表示、debugログの有効・無効。ログの場所や内容は返しません
+- 管理画面のファイルエディターとファイル変更の許可状態
+- Coreマイナー自動更新、プラグイン・テーマ自動更新設定、過去のCore自動更新失敗
+- 現在サイトの管理者ロール割り当て人数
+- Application Passwordがサイト全体と現在ユーザーで利用可能か
+
+各項目と全体状態は `good`、`recommended`、`attention`、`unknown` のいずれかです。
+`attention`は脆弱性の確定ではなく、早めの確認を推奨する状態です。`unknown`は情報不足を表し、
+安全・危険のどちらにも推測しません。
+
+ユーザー名、メールアドレス、認証情報、nonce、secret key、DB情報、`wp-config.php`の内容、
+絶対パス、プラグイン・テーマの詳細、Application Passwordの件数・個別情報は返しません。
 
 ## 接続を終了・停止する
 
