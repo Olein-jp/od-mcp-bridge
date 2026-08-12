@@ -370,6 +370,10 @@ WordPressへ保存しません。JWKSから取得した公開鍵情報だけを�
 OAuth resource URIを空欄にすると、表示中のMCP endpointが使用されます。認可サーバーが
 アクセストークンへ設定する `aud` と、一文字単位で同じ値にしてください。
 
+OAuth接続でAbilityを探索すると、アクセストークンが持つScopeに対応するAbilityだけが返ります。
+たとえば `od-mcp:discover od-mcp:content:read` のトークンには公開コンテンツ系だけが表示され、
+保守系Abilityの探索結果と詳細は表示されません。Application Password接続の探索結果は従来どおりです。
+
 「Application Password and OAuth」は移行確認用です。このモードでは有効なApplication Passwordも
 代替の認証経路になるため、OAuth移行後は「OAuth only」を推奨します。
 
@@ -395,6 +399,39 @@ curl --include \
 
 本番環境ではWebサーバーやリバースプロキシが `Authorization` と `WWW-Authenticate` を削除しない
 ことも確認してください。実トークンをコマンド履歴、アクセスログ、Issue、チャットへ貼り付けないでください。
+
+### 実サイトでOAuth E2Eを確認する
+
+認可サーバーでAuthorization Code + PKCE S256を完了し、`od-mcp:discover` と
+`od-mcp:content:read` を持つアクセストークンを取得してから実行します。対話的なシェル入力など、
+トークンをシェル履歴へ残さない方法で環境変数を設定してください。
+
+```bash
+export OD_MCP_URL='https://example.com/wp-json/mcp/mcp-adapter-default-server'
+export OD_MCP_METADATA_URL='https://example.com/wp-json/od-mcp-bridge/v1/oauth-protected-resource'
+read -r -s OD_MCP_ACCESS_TOKEN
+export OD_MCP_ACCESS_TOKEN
+composer test:oauth:live
+unset OD_MCP_ACCESS_TOKEN
+```
+
+このテストは、Metadataの取得、未認証時の401 Bearer Challenge、Bearerトークンを使ったMCP
+initialize、session IDの受領、`od-mcp-bridge/get-site-info` の実行を確認します。成功すると
+`OAuth MCP smoke test passed.` と表示します。失敗時のレスポンス本文やトークンは表示しません。
+
+ブラウザクライアントが `Origin` ヘッダーを送る場合、WordPressのhome/site Origin以外は
+既定で403になります。別Originを利用する統合では、テーマや連携用プラグインから次のように
+完全なOriginを追加します。ワイルドカードやリクエスト値の無条件追加は行わないでください。
+
+```php
+add_filter(
+	'od_mcp_bridge_allowed_origins',
+	static function ( $origins ) {
+		$origins[] = 'https://mcp-client.example.com';
+		return $origins;
+	}
+);
+```
 
 ### 外部プロバイダーへの対応
 

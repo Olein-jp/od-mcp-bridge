@@ -88,6 +88,11 @@ https://example.com/wp-json/mcp/mcp-adapter-default-server
 
 本番環境では必ず HTTPS の endpoint を使用してください。
 
+ブラウザから送信されるMCPリクエストは、DNS Rebinding対策として `Origin` を検証します。
+WordPressのhome/site Originは既定で許可され、Originを送らないサーバー間クライアントも利用できます。
+別Originのブラウザクライアントを許可する場合は、ワイルドカードを使わず
+`od_mcp_bridge_allowed_origins` フィルターへ完全なOriginを追加してください。
+
 ### OAuth 2.1リソースサーバー
 
 Application Passwordに加えて、外部認可サーバーが発行するRS256 JWTアクセストークンを
@@ -97,7 +102,8 @@ MCP専用ユーザーのプロフィールへトークンの `sub` を対応付�
 OAuth接続では、MCP初期化と探索用の `od-mcp:discover` に加え、実行対象に応じて
 `od-mcp:content:read` または `od-mcp:maintenance:read` が必要です。Scopeと既存のWordPress
 capabilityを両方満たした場合だけAbilityが実行されます。未登録の第三者AbilityはOAuth経由では
-既定で拒否します。
+既定で拒否します。OAuthでのAbility探索結果には、現在のアクセストークンのScopeで実行できる
+Abilityだけが表示され、対象Scopeを持たないAbilityの詳細取得も拒否されます。
 
 Protected Resource Metadata:
 
@@ -107,6 +113,10 @@ https://example.com/wp-json/od-mcp-bridge/v1/oauth-protected-resource
 
 認可サーバーの構成、ユーザー対応付け、対応トークン、移行手順は
 [利用マニュアルのOAuth 2.1で接続する](docs/user-manual.md#oauth-21で接続する)を参照してください。
+
+実サイトで取得したアクセストークンを使うE2Eスモークテストは、トークンをファイルや引数へ
+書かず環境変数へ設定して `composer test:oauth:live` を実行できます。必要な変数と確認内容は
+[利用マニュアルの実サイトでOAuth E2Eを確認する](docs/user-manual.md#実サイトでoauth-e2eを確認する)を参照してください。
 
 ### 専用ユーザーと Application Password
 

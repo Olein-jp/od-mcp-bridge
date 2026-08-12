@@ -58,6 +58,13 @@ final class Resource_Server {
 	private $request_scopes = array();
 
 	/**
+	 * Whether the active MCP request used a valid OAuth Bearer token.
+	 *
+	 * @var bool
+	 */
+	private $oauth_authenticated = false;
+
+	/**
 	 * Constructor.
 	 *
 	 * @param Settings_Page $settings Plugin settings.
@@ -130,7 +137,8 @@ final class Resource_Server {
 			return $result;
 		}
 
-		$this->request_scopes = array();
+		$this->request_scopes      = array();
+		$this->oauth_authenticated = false;
 
 		$mode = $this->settings->get_auth_mode();
 		if ( Settings_Page::AUTH_APPLICATION_PASSWORD === $mode ) {
@@ -163,7 +171,8 @@ final class Resource_Server {
 		}
 
 		wp_set_current_user( $user_id );
-		$this->request_scopes = isset( $claims['od_mcp_scopes'] ) && is_array( $claims['od_mcp_scopes'] ) ? array_map( 'strval', $claims['od_mcp_scopes'] ) : array();
+		$this->request_scopes      = isset( $claims['od_mcp_scopes'] ) && is_array( $claims['od_mcp_scopes'] ) ? array_map( 'strval', $claims['od_mcp_scopes'] ) : array();
+		$this->oauth_authenticated = true;
 
 		$required      = array( Scope_Policy::DISCOVER );
 		$ability_names = $this->get_requested_ability_names( $request );
@@ -181,6 +190,20 @@ final class Resource_Server {
 		}
 
 		return $result;
+	}
+
+	/** Returns whether a Bearer token authenticated the active MCP request. */
+	public function is_oauth_authenticated() {
+		return $this->oauth_authenticated;
+	}
+
+	/**
+	 * Returns the normalized scopes for the active MCP request.
+	 *
+	 * @return array<int,string>
+	 */
+	public function get_request_scopes() {
+		return $this->request_scopes;
 	}
 
 	/**
@@ -203,7 +226,11 @@ final class Resource_Server {
 			}
 			$params    = isset( $message['params'] ) && is_array( $message['params'] ) ? $message['params'] : array();
 			$arguments = isset( $params['arguments'] ) && is_array( $params['arguments'] ) ? $params['arguments'] : array();
-			if ( 'mcp-adapter-execute-ability' === ( $params['name'] ?? '' ) && isset( $arguments['ability_name'] ) && is_string( $arguments['ability_name'] ) ) {
+			if (
+				in_array( ( $params['name'] ?? '' ), array( 'mcp-adapter-execute-ability', 'mcp-adapter-get-ability-info' ), true ) &&
+				isset( $arguments['ability_name'] ) &&
+				is_string( $arguments['ability_name'] )
+			) {
 				$abilities[] = $arguments['ability_name'];
 			}
 		}

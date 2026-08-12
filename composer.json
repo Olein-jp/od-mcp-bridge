@@ -33,6 +33,7 @@
   "scripts": {
     "lint": "phpcs --standard=phpcs.xml.dist",
     "format": "phpcbf --standard=phpcs.xml.dist",
-    "test:integration": "npx --no-install wp-env run tests-cli --env-cwd=wp-content/plugins/od-mcp-bridge ./vendor/bin/phpunit -- -c phpunit.xml.dist"
+    "test:integration": "npx --no-install wp-env run tests-cli --env-cwd=wp-content/plugins/od-mcp-bridge ./vendor/bin/phpunit -- -c phpunit.xml.dist",
+    "test:oauth:live": "bash scripts/oauth-smoke-test.sh"
   }
 }
