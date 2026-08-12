@@ -41,7 +41,7 @@ final class Connection_Diagnostics {
 		foreach ( Role_Manager::get_capabilities() as $capability ) {
 			$role_is_safe = $role_is_safe && $role->has_cap( $capability );
 		}
-		foreach ( array( 'activate_plugins', 'switch_themes', 'manage_options', 'update_core', 'update_plugins', 'update_themes' ) as $capability ) {
+		foreach ( array( 'edit_posts', 'activate_plugins', 'switch_themes', 'manage_options', 'update_core', 'update_plugins', 'update_themes' ) as $capability ) {
 			$role_is_safe = $role_is_safe && ! $role->has_cap( $capability );
 		}
 

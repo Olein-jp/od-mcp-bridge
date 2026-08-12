@@ -1,10 +1,11 @@
 # OD MCP Bridge 利用マニュアル
 
 このマニュアルは、OD MCP Bridge を WordPress サイトへ導入し、MCP クライアントから
-公開コンテンツやサイト保守情報を安全に読み取る手順をまとめたものです。
+公開コンテンツやサイト保守情報を安全に読み取り、必要に応じて投稿下書きを作成する手順をまとめたものです。
 
 OD MCP Bridge は、WordPress に登録した機能を AI クライアントから呼び出せるようにする
-プラグインです。現時点では読み取り専用で、投稿の作成、編集、削除は行いません。
+プラグインです。読み取り機能に加え、初期状態で無効な「投稿下書き作成」だけを write 系機能として提供します。
+公開、既存投稿の更新、削除は行いません。
 
 ## 実サイトで試すための最短手順
 
@@ -46,7 +47,7 @@ HTTP プロキシを介して WordPress サイトへ接続します。
 ## できることと、できないこと
 
 Ability は、WordPress 側で実行できる個別の機能を表します。公開コンテンツ系6件と、
-サイト保守系9件を利用できます。保守系は初期状態で無効です。
+サイト保守系9件と、安全な投稿下書き作成1件を利用できます。保守系と下書き作成は初期状態で無効です。
 
 ## Ability 一覧と必要権限
 
@@ -56,6 +57,7 @@ Ability は、WordPress 側で実行できる個別の機能を表します。�
 | `get-posts` / `get-post` | 公開済み投稿の一覧・本文 | `read` | `od-mcp:content:read` | 有効 |
 | `get-pages` / `get-page` | 公開済み固定ページの一覧・本文 | `read` | `od-mcp:content:read` | 有効 |
 | `get-terms` | カテゴリーまたはタグ | `read` | `od-mcp:content:read` | 有効 |
+| `create-post-draft` | 投稿下書きを新規作成 | `edit_posts`（カテゴリー指定時は `assign_terms` も必要） | `od-mcp:content:write` | 無効 |
 | `get-update-status` | キャッシュ済み更新状況 | `od_mcp_bridge_view_*_updates` | `od-mcp:maintenance:read` | 無効 |
 | `get-plugins` | プラグイン状態 | `od_mcp_bridge_view_plugins` | `od-mcp:maintenance:read` | 無効 |
 | `get-themes` | テーマ状態 | `od_mcp_bridge_view_themes` | `od-mcp:maintenance:read` | 無効 |
@@ -72,6 +74,8 @@ ScopeだけではWordPressの権限を付与できず、対応するWordPress ca
 保守系の独自 capability は、プラグインが作成する「MCP Maintenance Reader」ロールと
 管理者ロールへ付与されます。この専用ロールにはプラグイン有効化、テーマ変更、設定変更などの
 WordPress管理権限を付与しないため、管理者をMCP接続へ使わずに保守情報を参照できます。
+`MCP Maintenance Reader` には `edit_posts` を付与しないため、下書き作成には投稿者などの
+投稿作成権限を持つ別の専用ユーザーを使用してください。
 
 ## Codex から使うときのプロンプト例
 
@@ -86,6 +90,8 @@ OD MCP Bridge を MCP server として Codex に接続すると、通常は Abil
 保守系 Ability は初期状態で無効です。利用前に「設定」→「OD MCP Bridge」で対象を有効にし、
 必要な capability を持つ専用ユーザーで接続してください。無効な Ability は Codex から発見できず、
 権限が不足している場合は実行を拒否します。
+投稿下書き作成も初期状態では無効です。意図しない書き込みを避けるため、必要なサイトだけで
+`create-post-draft` を有効にしてください。
 
 ### 1. サイトの基本情報を確認する：`get-site-info`
 
@@ -230,11 +236,25 @@ Application Passwordは利用可能かどうかだけを確認します。件数
 利用日時、IPアドレスは取得しません。管理者についても現在サイトの人数だけを返し、ユーザー名、
 メールアドレス、ユーザーIDは返しません。
 
-すべて読み取り専用です。次の情報や操作は対象に含まれません。
+### 16. 投稿の下書きを作成する：`create-post-draft`
+
+新しい投稿を、接続ユーザーを作成者とする下書きとして保存します。
+
+> 「夏季休業のお知らせ」というタイトルで、8月13日から16日まで休業する案内文を投稿の下書きとして作成してください。公開はしないでください。
+
+Codex は本文を整え、重複防止用の UUID を生成して下書き作成を実行します。成功時は投稿 ID、
+`draft` という状態、管理画面の編集 URL、新規作成か再送結果かを返します。同じ UUID と同じ内容を
+再送しても投稿は増えません。タイトルや本文を変えて同じ UUID を再利用すると競合エラーになります。
+
+この Ability では投稿タイプ、公開状態、作成者、公開日時、slugを指定できません。WordPress側が
+常に通常投稿、下書き、現在の接続ユーザーへ固定します。作成後は編集 URL を開いて内容を確認し、
+公開操作はWordPress管理画面から人が行ってください。
+
+`create-post-draft` 以外はすべて読み取り専用です。次の情報や操作は対象に含まれません。
 
 - 下書き、予約投稿、非公開投稿の取得
 - ユーザー情報や認証情報の取得
-- 投稿の作成、更新、削除
+- 投稿下書き以外の作成、既存投稿の更新、公開、削除
 - WordPress の設定変更
 - サーバー内のファイルパスや WP-Cron の引数の取得
 - サイトヘルス確認を目的とした外部 HTTP 通信
@@ -364,8 +384,8 @@ WordPressへ保存しません。JWKSから取得した公開鍵情報だけを�
 2. 「設定」→「OD MCP Bridge」のAuthenticationでIssuer、JWKS URI、OAuth resource URIを入力する
 3. Authentication modeを最初は「Application Password and OAuth」、移行確認後は「OAuth only」にする
 4. MCP専用ユーザーの編集画面を開き、「OD MCP Bridge OAuth」のOAuth subjectへトークンの `sub` を入力する
-5. 公開コンテンツだけなら購読者、保守情報も使うならMCP Maintenance Readerロールを割り当てる
-6. 認可サーバーで `od-mcp:discover` と、用途に応じた読み取りScopeをクライアントへ許可する
+5. 公開コンテンツだけなら購読者、保守情報も使うならMCP Maintenance Reader、下書き作成なら投稿者など `edit_posts` を持つ専用ユーザーを割り当てる
+6. 認可サーバーで `od-mcp:discover` と、用途に応じた `od-mcp:content:read`、`od-mcp:maintenance:read`、`od-mcp:content:write` をクライアントへ許可する
 
 OAuth resource URIを空欄にすると、表示中のMCP endpointが使用されます。認可サーバーが
 アクセストークンへ設定する `aud` と、一文字単位で同じ値にしてください。
@@ -373,6 +393,7 @@ OAuth resource URIを空欄にすると、表示中のMCP endpointが使用さ�
 OAuth接続でAbilityを探索すると、アクセストークンが持つScopeに対応するAbilityだけが返ります。
 たとえば `od-mcp:discover od-mcp:content:read` のトークンには公開コンテンツ系だけが表示され、
 保守系Abilityの探索結果と詳細は表示されません。Application Password接続の探索結果は従来どおりです。
+下書き作成を探索・実行するには `od-mcp:content:write` が必要で、読み取りScopeだけでは許可されません。
 
 「Application Password and OAuth」は移行確認用です。このモードでは有効なApplication Passwordも
 代替の認証経路になるため、OAuth移行後は「OAuth only」を推奨します。
@@ -582,6 +603,16 @@ mcp_inspector \
   --tool-args-json '{"ability_name":"od-mcp-bridge/get-terms","parameters":{"taxonomy":"category","per_page":20}}'
 ```
 
+投稿下書きを作成する場合は、管理画面で `create-post-draft` を有効にし、`edit_posts` を持つ
+専用ユーザーで実行します。`request_id` は実行ごとに新しい UUID を生成し、通信再送時だけ同じ値を使います。
+
+```bash
+mcp_inspector \
+  --method tools/call \
+  --tool-name mcp-adapter-execute-ability \
+  --tool-args-json '{"ability_name":"od-mcp-bridge/create-post-draft","parameters":{"request_id":"550e8400-e29b-41d4-a716-446655440000","title":"夏季休業のお知らせ","content":"<!-- wp:paragraph --><p>8月13日から16日まで休業します。</p><!-- /wp:paragraph -->"}}'
+```
+
 保守スナップショットを使う場合は、管理画面でスナップショットと必要な保守系 Ability を
 有効にしてから、「MCP Maintenance Reader」ロールの専用ユーザーで実行します。
 
@@ -702,6 +733,29 @@ unset WP_API_PASSWORD
 
 各項目には `id`、`name`、`slug`、HTMLを除いた `description`、`count`、`taxonomy` が
 含まれます。
+
+### `od-mcp-bridge/create-post-draft`
+
+初期状態では無効です。「設定」→「OD MCP Bridge」で有効にし、`edit_posts` を持つ専用ユーザーで
+接続してください。入力は次の項目だけを受け付けます。
+
+| パラメータ | 型 | 必須 | 内容 |
+| --- | --- | --- | --- |
+| `request_id` | UUID文字列 | 必須 | 接続ユーザー単位の重複防止キー |
+| `title` | 文字列 | 必須 | サニタイズ後に空ではないタイトル。最大200文字 |
+| `content` | 文字列 | 必須 | 投稿本文。空文字可、最大200,000文字 |
+| `excerpt` | 文字列 | 任意 | 抜粋。最大5,000文字 |
+| `categories` | 正の整数の配列 | 任意 | 存在するカテゴリーID。重複不可、最大20件 |
+
+返却値は `id`、固定値 `draft` の `status`、`edit_url`、新規作成時に `true` となる `created` です。
+同じユーザーが同じ `request_id` と同じ正規化済み内容を再送すると、既存下書きと
+`created: false` を返します。異なる内容での再利用、同じ依頼の同時実行、作成済み投稿が既に
+公開・削除されている場合は、新しい投稿を作らず競合エラーを返します。
+
+`post_type`、`post_status`、`post_author`、日時、slugなどは入力できません。投稿は必ず通常投稿の
+下書きとなり、作成者は現在の接続ユーザーへ固定されます。カテゴリー指定時はカテゴリーへの
+割り当て権限も確認します。作成元と冪等性確認用の値は保護された投稿メタへ保存しますが、
+認証情報、OAuth claim、ユーザー名、メールアドレスは保存しません。
 
 ### `od-mcp-bridge/get-update-status`
 

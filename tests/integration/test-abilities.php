@@ -7,6 +7,7 @@
 
 use Olein\MCPBridge\Abilities;
 use Olein\MCPBridge\Admin\Settings_Page;
+use Olein\MCPBridge\Draft_Post_Creator;
 use Olein\MCPBridge\Role_Manager;
 
 /**
@@ -26,6 +27,7 @@ class Test_OD_MCP_Bridge_Abilities extends WP_UnitTestCase {
 		'od-mcp-bridge/get-pages',
 		'od-mcp-bridge/get-page',
 		'od-mcp-bridge/get-terms',
+		'od-mcp-bridge/create-post-draft',
 		'od-mcp-bridge/get-update-status',
 		'od-mcp-bridge/get-plugins',
 		'od-mcp-bridge/get-themes',
@@ -217,6 +219,144 @@ class Test_OD_MCP_Bridge_Abilities extends WP_UnitTestCase {
 		foreach ( array_diff( $this->ability_names, $this->default_ability_names ) as $ability_name ) {
 			$this->assertFalse( $registry->is_registered( $ability_name ) );
 		}
+	}
+
+	/** Confirms the opt-in draft ability has a strict write contract. */
+	public function test_post_draft_ability_registers_safe_write_metadata_and_schema() {
+		$this->enable_abilities( array( 'create-post-draft' ) );
+		$ability = wp_get_ability( 'od-mcp-bridge/create-post-draft' );
+
+		$this->assertInstanceOf( WP_Ability::class, $ability );
+		$this->assertSame(
+			array(
+				'readonly'    => false,
+				'destructive' => false,
+				'idempotent'  => true,
+			),
+			$ability->get_meta_item( 'annotations' )
+		);
+		$this->assertTrue( $ability->get_meta_item( 'show_in_rest' ) );
+		$this->assertFalse( $ability->get_input_schema()['additionalProperties'] );
+		$this->assertSame( array( 'request_id', 'title', 'content' ), $ability->get_input_schema()['required'] );
+		$this->assertSame( 20, $ability->get_input_schema()['properties']['categories']['maxItems'] );
+		$this->assertSame( array( 'id', 'status', 'edit_url', 'created' ), $ability->get_output_schema()['required'] );
+	}
+
+	/** Confirms draft creation requires edit_posts and excludes the maintenance reader. */
+	public function test_post_draft_ability_enforces_write_permissions() {
+		$this->enable_abilities( array( 'create-post-draft' ) );
+		$ability = wp_get_ability( 'od-mcp-bridge/create-post-draft' );
+		$input   = $this->get_draft_input();
+
+		wp_set_current_user( self::factory()->user->create( array( 'role' => Role_Manager::ROLE ) ) );
+		$this->assertFalse( $ability->check_permissions( $input ) );
+		$this->assertWPError( $ability->execute( $input ) );
+
+		wp_set_current_user( self::factory()->user->create( array( 'role' => 'author' ) ) );
+		$this->assertTrue( $ability->check_permissions( $input ) );
+	}
+
+	/** Confirms draft fields, category assignment, and protected audit metadata. */
+	public function test_post_draft_ability_creates_only_a_sanitized_draft() {
+		$this->enable_abilities( array( 'create-post-draft' ) );
+		$user_id     = self::factory()->user->create( array( 'role' => 'author' ) );
+		$category_id = self::factory()->term->create(
+			array(
+				'name'     => 'Draft category',
+				'taxonomy' => 'category',
+			)
+		);
+		wp_set_current_user( $user_id );
+
+		$input  = $this->get_draft_input(
+			array(
+				'title'      => '<b>Safe draft</b>',
+				'content'    => '<!-- wp:paragraph --><p>Allowed</p><!-- /wp:paragraph --><script>alert(1)</script>',
+				'excerpt'    => '<strong>Excerpt</strong>',
+				'categories' => array( $category_id ),
+			)
+		);
+		$result = wp_get_ability( 'od-mcp-bridge/create-post-draft' )->execute( $input );
+
+		$this->assertIsArray( $result );
+		$this->assertTrue( $result['created'] );
+		$this->assertSame( 'draft', $result['status'] );
+		$this->assertSame( 'Safe draft', get_post_field( 'post_title', $result['id'] ) );
+		$this->assertSame( 'draft', get_post_status( $result['id'] ) );
+		$this->assertSame( 'post', get_post_type( $result['id'] ) );
+		$this->assertSame( $user_id, (int) get_post_field( 'post_author', $result['id'] ) );
+		$this->assertStringNotContainsString( '<script', get_post_field( 'post_content', $result['id'] ) );
+		$this->assertContains( $category_id, wp_get_post_categories( $result['id'] ) );
+		$this->assertSame( '1', get_post_meta( $result['id'], Draft_Post_Creator::META_CREATED, true ) );
+		$this->assertSame( $input['request_id'], get_post_meta( $result['id'], Draft_Post_Creator::META_REQUEST_ID, true ) );
+		$this->assertNotSame( '', get_post_meta( $result['id'], Draft_Post_Creator::META_PAYLOAD_HASH, true ) );
+	}
+
+	/** Confirms request IDs prevent duplicate drafts and reject payload changes. */
+	public function test_post_draft_ability_is_idempotent_per_user_and_payload() {
+		$this->enable_abilities( array( 'create-post-draft' ) );
+		wp_set_current_user( self::factory()->user->create( array( 'role' => 'author' ) ) );
+		$ability = wp_get_ability( 'od-mcp-bridge/create-post-draft' );
+		$input   = $this->get_draft_input();
+
+		$first  = $ability->execute( $input );
+		$replay = $ability->execute( $input );
+
+		$this->assertTrue( $first['created'] );
+		$this->assertFalse( $replay['created'] );
+		$this->assertSame( $first['id'], $replay['id'] );
+
+		$input['title'] = 'Changed payload';
+		$conflict       = $ability->execute( $input );
+		$this->assertWPError( $conflict );
+		$this->assertSame( 'od_mcp_bridge_draft_request_conflict', $conflict->get_error_code() );
+	}
+
+	/** Confirms an in-flight request is rejected without creating a duplicate. */
+	public function test_post_draft_ability_rejects_concurrent_request() {
+		$this->enable_abilities( array( 'create-post-draft' ) );
+		$user_id = self::factory()->user->create( array( 'role' => 'author' ) );
+		$input   = $this->get_draft_input();
+		wp_set_current_user( $user_id );
+		$lock_key = 'od_mcp_bridge_draft_lock_' . md5( get_current_blog_id() . '|' . $user_id . '|' . $input['request_id'] );
+		add_option( $lock_key, time(), '', false );
+
+		$result = wp_get_ability( 'od-mcp-bridge/create-post-draft' )->execute( $input );
+
+		$this->assertWPError( $result );
+		$this->assertSame( 'od_mcp_bridge_draft_request_in_progress', $result->get_error_code() );
+		$this->assertSame(
+			0,
+			count(
+				get_posts(
+					array(
+						'post_type'   => 'post',
+						'post_status' => 'draft',
+						'author'      => $user_id,
+					)
+				)
+			)
+		);
+		delete_option( $lock_key );
+	}
+
+	/** Confirms strict schema and category validation reject unsafe inputs. */
+	public function test_post_draft_ability_rejects_invalid_inputs() {
+		$this->enable_abilities( array( 'create-post-draft' ) );
+		wp_set_current_user( self::factory()->user->create( array( 'role' => 'author' ) ) );
+		$ability = wp_get_ability( 'od-mcp-bridge/create-post-draft' );
+
+		$unknown           = $this->get_draft_input();
+		$unknown['status'] = 'publish';
+		$this->assertWPError( $ability->execute( $unknown ) );
+
+		$missing_category               = $this->get_draft_input( array( 'request_id' => '22222222-2222-4222-8222-222222222222' ) );
+		$missing_category['categories'] = array( 99999999 );
+		$this->assertWPError( $ability->execute( $missing_category ) );
+
+		$empty_title          = $this->get_draft_input( array( 'request_id' => '33333333-3333-4333-8333-333333333333' ) );
+		$empty_title['title'] = '<b></b>';
+		$this->assertWPError( $ability->execute( $empty_title ) );
 	}
 
 	/** Confirms maintenance abilities retain read-only metadata and elevated permissions. */
@@ -485,6 +625,23 @@ class Test_OD_MCP_Bridge_Abilities extends WP_UnitTestCase {
 		}
 		update_option( Settings_Page::OPTION_NAME, $settings );
 		$this->register_abilities_during_init();
+	}
+
+	/**
+	 * Returns valid draft input with optional overrides.
+	 *
+	 * @param array<string, mixed> $overrides Input overrides.
+	 * @return array<string, mixed>
+	 */
+	private function get_draft_input( $overrides = array() ) {
+		return array_merge(
+			array(
+				'request_id' => '11111111-1111-4111-8111-111111111111',
+				'title'      => 'MCP draft',
+				'content'    => '<p>Draft content</p>',
+			),
+			$overrides
+		);
 	}
 
 	/** Unregisters every plugin ability that is currently present. */

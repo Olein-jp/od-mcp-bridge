@@ -1,6 +1,6 @@
 <?php
 /**
- * Read-only WordPress abilities.
+ * WordPress abilities exposed through MCP.
  *
  * @package OdMcpBridge
  */
@@ -49,7 +49,7 @@ final class Abilities {
 			self::CATEGORY,
 			array(
 				'label'       => __( 'OD MCP Bridge', 'od-mcp-bridge' ),
-				'description' => __( 'Read-only public content and maintenance information exposed by OD MCP Bridge.', 'od-mcp-bridge' ),
+				'description' => __( 'Public content, maintenance information, and opt-in safe content operations exposed by OD MCP Bridge.', 'od-mcp-bridge' ),
 			)
 		);
 	}
@@ -63,6 +63,7 @@ final class Abilities {
 			'get-pages'                => 'register_pages',
 			'get-page'                 => 'register_page',
 			'get-terms'                => 'register_terms',
+			'create-post-draft'        => 'register_post_draft',
 			'get-update-status'        => 'register_update_status',
 			'get-plugins'              => 'register_plugins',
 			'get-themes'               => 'register_themes',
@@ -589,6 +590,35 @@ final class Abilities {
 			array( $this, 'can_read' ),
 			$this->get_terms_input_schema(),
 			$this->get_terms_output_schema()
+		);
+	}
+
+	/** Registers safe, idempotent post draft creation. */
+	private function register_post_draft() {
+		$creator = new Draft_Post_Creator();
+		$key     = 'create-post-draft';
+
+		wp_register_ability(
+			'od-mcp-bridge/' . $key,
+			array(
+				'label'               => __( 'Create a post draft', 'od-mcp-bridge' ),
+				'description'         => __( 'Creates only a post draft for the current user, with request ID based idempotency.', 'od-mcp-bridge' ),
+				'category'            => self::CATEGORY,
+				'input_schema'        => $this->get_post_draft_input_schema(),
+				'output_schema'       => $this->get_post_draft_output_schema(),
+				'execute_callback'    => array( $creator, 'execute' ),
+				'permission_callback' => array( $creator, 'check_permissions' ),
+				'meta'                => array(
+					'annotations'  => array(
+						'readonly'    => false,
+						'destructive' => false,
+						'idempotent'  => true,
+					),
+					'show_in_rest' => true,
+					'mcp'          => array( 'public' => true ),
+					'oauth'        => array( 'required_scope' => ( new Scope_Policy() )->get_ability_scope( 'od-mcp-bridge/' . $key ) ),
+				),
+			)
 		);
 	}
 
@@ -1147,6 +1177,62 @@ final class Abilities {
 				),
 			),
 			array()
+		);
+	}
+
+	/** Returns the strict post draft input schema. */
+	private function get_post_draft_input_schema() {
+		return $this->object_schema(
+			array(
+				'request_id' => array(
+					'type'      => 'string',
+					'minLength' => 36,
+					'maxLength' => 36,
+					'pattern'   => '^[0-9a-fA-F]{8}-[0-9a-fA-F]{4}-[1-5][0-9a-fA-F]{3}-[89abAB][0-9a-fA-F]{3}-[0-9a-fA-F]{12}$',
+				),
+				'title'      => array(
+					'type'      => 'string',
+					'minLength' => 1,
+					'maxLength' => 200,
+				),
+				'content'    => array(
+					'type'      => 'string',
+					'maxLength' => 200000,
+				),
+				'excerpt'    => array(
+					'type'      => 'string',
+					'maxLength' => 5000,
+				),
+				'categories' => array(
+					'type'        => 'array',
+					'items'       => array(
+						'type'    => 'integer',
+						'minimum' => 1,
+					),
+					'maxItems'    => 20,
+					'uniqueItems' => true,
+				),
+			),
+			array( 'request_id', 'title', 'content' )
+		);
+	}
+
+	/** Returns the post draft result schema. */
+	private function get_post_draft_output_schema() {
+		return $this->object_schema(
+			array(
+				'id'       => array(
+					'type'    => 'integer',
+					'minimum' => 1,
+				),
+				'status'   => array(
+					'type' => 'string',
+					'enum' => array( 'draft' ),
+				),
+				'edit_url' => array( 'type' => 'string' ),
+				'created'  => array( 'type' => 'boolean' ),
+			),
+			array( 'id', 'status', 'edit_url', 'created' )
 		);
 	}
 

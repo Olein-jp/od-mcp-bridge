@@ -49,6 +49,7 @@ final class Settings_Page {
 		'get-pages',
 		'get-page',
 		'get-terms',
+		'create-post-draft',
 		'get-update-status',
 		'get-plugins',
 		'get-themes',
@@ -432,7 +433,7 @@ final class Settings_Page {
 	public function render_abilities_description() {
 		printf(
 			'<p>%s</p>',
-			esc_html__( 'Only enabled abilities are registered and exposed. Public content abilities are enabled by default; maintenance abilities are disabled by default and require the dedicated read-only MCP capabilities.', 'od-mcp-bridge' )
+			esc_html__( 'Only enabled abilities are registered and exposed. Public content abilities are enabled by default. Maintenance abilities and post draft creation are disabled by default; draft creation requires edit_posts and never grants it to the MCP Maintenance Reader role.', 'od-mcp-bridge' )
 		);
 	}
 
@@ -538,6 +539,7 @@ final class Settings_Page {
 			'get-pages'                => __( 'Published page list', 'od-mcp-bridge' ),
 			'get-page'                 => __( 'Published page content', 'od-mcp-bridge' ),
 			'get-terms'                => __( 'Categories and tags', 'od-mcp-bridge' ),
+			'create-post-draft'        => __( 'Create post draft (write)', 'od-mcp-bridge' ),
 			'get-update-status'        => __( 'Update status (maintenance)', 'od-mcp-bridge' ),
 			'get-plugins'              => __( 'Plugin inventory (maintenance)', 'od-mcp-bridge' ),
 			'get-themes'               => __( 'Theme inventory (maintenance)', 'od-mcp-bridge' ),
