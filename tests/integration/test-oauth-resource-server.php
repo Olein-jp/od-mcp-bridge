@@ -61,6 +61,7 @@ class Test_OD_MCP_Bridge_OAuth_Resource_Server extends WP_UnitTestCase {
 		$this->assertSame( 'https://site.example.com/mcp', $data['resource'] );
 		$this->assertSame( array( 'https://auth.example.com' ), $data['authorization_servers'] );
 		$this->assertContains( Scope_Policy::DISCOVER, $data['scopes_supported'] );
+		$this->assertContains( Scope_Policy::CONTENT_WRITE, $data['scopes_supported'] );
 		$this->assertContains( Scope_Policy::MAINTENANCE_READ, $data['scopes_supported'] );
 	}
 
@@ -100,6 +101,24 @@ class Test_OD_MCP_Bridge_OAuth_Resource_Server extends WP_UnitTestCase {
 		$this->assertNull( $result );
 		$this->assertSame( $user_id, get_current_user_id() );
 		$this->assertTrue( current_user_can( 'read' ) );
+	}
+
+	/** Confirms draft creation requires the dedicated write scope. */
+	public function test_post_draft_requires_content_write_scope() {
+		$user_id = self::factory()->user->create( array( 'role' => 'author' ) );
+		$this->map_user( $user_id );
+		$this->filter_validated_claims( array( Scope_Policy::DISCOVER, Scope_Policy::CONTENT_READ ) );
+
+		$response = $this->create_resource_server()->protect_mcp_request( null, null, $this->create_ability_request( 'od-mcp-bridge/create-post-draft' ) );
+
+		$this->assertSame( 403, $response->get_status() );
+		$this->assertStringContainsString( Scope_Policy::CONTENT_WRITE, $response->get_headers()['WWW-Authenticate'] );
+
+		wp_set_current_user( 0 );
+		remove_filter( 'od_mcp_bridge_oauth_validate_token', $this->token_filter );
+		$this->filter_validated_claims( array( Scope_Policy::DISCOVER, Scope_Policy::CONTENT_WRITE ) );
+		$this->assertNull( $this->create_resource_server()->protect_mcp_request( null, null, $this->create_ability_request( 'od-mcp-bridge/create-post-draft' ) ) );
+		$this->assertSame( $user_id, get_current_user_id() );
 	}
 
 	/** Confirms OAuth refuses public abilities without an explicit scope mapping. */

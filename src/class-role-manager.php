@@ -125,6 +125,10 @@ final class Role_Manager {
 			'get-pages'                => $read,
 			'get-page'                 => $read,
 			'get-terms'                => $read,
+			'create-post-draft'        => array(
+				'capabilities' => array( 'edit_posts' ),
+				'match'        => 'all',
+			),
 			'get-update-status'        => array(
 				'capabilities' => array( self::VIEW_CORE_UPDATES, self::VIEW_PLUGIN_UPDATES, self::VIEW_THEME_UPDATES ),
 				'match'        => 'any',

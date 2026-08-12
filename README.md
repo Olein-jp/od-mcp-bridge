@@ -9,7 +9,7 @@ MCP クライアントへ安全に公開するためのプラグインです。
 
 ## 提供する Ability
 
-すべて読み取り専用です。初期状態では、公開情報を扱う次の6件が有効です。
+初期状態では、公開情報を扱う次の6件が有効です。
 
 - `od-mcp-bridge/get-site-info`: サイト基本情報
 - `od-mcp-bridge/get-posts` / `get-post`: 公開済み投稿の一覧・本文
@@ -26,6 +26,10 @@ MCP クライアントへ安全に公開するためのプラグインです。
 - `get-cron-status`: 引数を除外した WP-Cron 状況
 - `get-maintenance-snapshot`: 上記の保守情報を権限境界付きで集約
 - `get-security-posture`: 外部通信や認証情報の取得を行わないセキュリティ設定要約
+
+安全な write 系 Ability `create-post-draft` も初期状態では無効です。有効化すると、`edit_posts` を持つ
+接続ユーザーを作成者として通常投稿の下書きだけを作成できます。UUIDによる冪等性を備え、公開、
+既存投稿の更新、削除、投稿タイプ・状態・作成者の指定はできません。
 
 下書きや非公開コンテンツ、ユーザー情報、認証情報、ファイルパス、Cron 引数は返しません。
 詳細な権限と入出力は[利用マニュアル](docs/user-manual.md#ability-一覧と必要権限)を参照してください。
@@ -100,7 +104,7 @@ Application Passwordに加えて、外部認可サーバーが発行するRS256 
 MCP専用ユーザーのプロフィールへトークンの `sub` を対応付けます。
 
 OAuth接続では、MCP初期化と探索用の `od-mcp:discover` に加え、実行対象に応じて
-`od-mcp:content:read` または `od-mcp:maintenance:read` が必要です。Scopeと既存のWordPress
+`od-mcp:content:read`、`od-mcp:content:write`、または `od-mcp:maintenance:read` が必要です。Scopeと既存のWordPress
 capabilityを両方満たした場合だけAbilityが実行されます。未登録の第三者AbilityはOAuth経由では
 既定で拒否します。OAuthでのAbility探索結果には、現在のアクセストークンのScopeで実行できる
 Abilityだけが表示され、対象Scopeを持たないAbilityの詳細取得も拒否されます。
@@ -285,5 +289,5 @@ git push origin 0.1.1
 ローカルでは次のコマンドで同じ ZIP を生成できます。
 
 ```bash
-npm run package -- 0.2.0
+npm run package -- 0.3.0
 ```

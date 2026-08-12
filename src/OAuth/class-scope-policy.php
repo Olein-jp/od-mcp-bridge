@@ -16,6 +16,9 @@ final class Scope_Policy {
 	/** Scope for public content abilities. */
 	const CONTENT_READ = 'od-mcp:content:read';
 
+	/** Scope for safe content creation abilities. */
+	const CONTENT_WRITE = 'od-mcp:content:write';
+
 	/** Scope for maintenance abilities. */
 	const MAINTENANCE_READ = 'od-mcp:maintenance:read';
 
@@ -28,6 +31,7 @@ final class Scope_Policy {
 		return array(
 			self::DISCOVER,
 			self::CONTENT_READ,
+			self::CONTENT_WRITE,
 			self::MAINTENANCE_READ,
 		);
 	}
@@ -66,6 +70,8 @@ final class Scope_Policy {
 		$scope = null;
 		if ( in_array( $ability_name, $content, true ) ) {
 			$scope = self::CONTENT_READ;
+		} elseif ( 'od-mcp-bridge/create-post-draft' === $ability_name ) {
+			$scope = self::CONTENT_WRITE;
 		} elseif ( in_array( $ability_name, $maintenance, true ) ) {
 			$scope = self::MAINTENANCE_READ;
 		}

@@ -28,7 +28,7 @@ class Test_OD_MCP_Bridge_Role_Manager extends WP_UnitTestCase {
 			$this->assertTrue( get_role( 'administrator' )->has_cap( $capability ) );
 		}
 
-		foreach ( array( 'activate_plugins', 'switch_themes', 'manage_options', 'update_core', 'update_plugins', 'update_themes' ) as $capability ) {
+		foreach ( array( 'edit_posts', 'activate_plugins', 'switch_themes', 'manage_options', 'update_core', 'update_plugins', 'update_themes' ) as $capability ) {
 			$this->assertFalse( $role->has_cap( $capability ) );
 		}
 	}
