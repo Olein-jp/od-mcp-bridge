@@ -44,6 +44,53 @@ MCP は Model Context Protocol の略で、AI クライアントと外部サー�
 データをやり取りするための共通仕様です。OD MCP Bridge では、WordPress MCP Adapter と
 HTTP プロキシを介して WordPress サイトへ接続します。
 
+## Codex 以外の AI サービスでも利用できます
+
+このプラグインは Codex 専用ではありません。Codex は利用できる MCP クライアントの一つです。
+OD MCP Bridge が WordPress 側で公開した Ability は、MCP を介して Claude、Visual Studio Code、
+Cursor、Gemini CLI など、対応する別の AI アプリケーションからも利用できます。
+
+このマニュアルでは、`@automattic/mcp-wordpress-remote` をローカルの stdio 形式 MCP サーバーとして
+起動し、WordPress の HTTPS endpoint へ中継する方法を共通の基準にしています。そのため、別の
+クライアントへ移る場合も、基本的には次の4点をそのクライアントの MCP 設定形式へ移します。
+
+- 実行コマンド：`npx`
+- 引数：`-y` と `@automattic/mcp-wordpress-remote@latest`
+- WordPress 接続情報：`WP_API_URL`、`WP_API_USERNAME`、`WP_API_PASSWORD`
+- Application Password 接続時の設定：`OAUTH_ENABLED=false`
+
+クライアントによって、設定ファイル名、JSON や TOML の構造、ユーザー単位・プロジェクト単位の
+保存場所、MCP ツールを実行する前の確認方法が異なります。このマニュアルの設定例をそのまま
+貼り付けるのではなく、次の一次情報を確認して構成を移してください。
+
+| 提供元・クライアント | 主な登録方法 | 公式ドキュメント |
+| --- | --- | --- |
+| OpenAI Codex／ChatGPTデスクトップアプリ | 設定画面、`codex mcp`、または `config.toml` | [OpenAI公式：Model Context Protocol](https://developers.openai.com/codex/mcp/) |
+| Anthropic Claude Code | `claude mcp` または MCP 設定 JSON | [Anthropic公式：Connect Claude Code to tools via MCP](https://code.claude.com/docs/en/mcp) |
+| Anthropic Claude Desktop | デスクトップアプリの Extensions／MCP 設定 | [Anthropic公式：Getting Started with Local MCP Servers on Claude Desktop](https://support.claude.com/en/articles/10949351-getting-started-with-local-mcp-servers-on-claude-desktop) |
+| Microsoft Visual Studio Code | コマンドパレットまたは `mcp.json` | [Microsoft公式：Add and manage MCP servers in VS Code](https://code.visualstudio.com/docs/agent-customization/mcp-servers) |
+| Cursor | MCP 設定画面または設定ファイル | [Cursor公式：Model Context Protocol](https://docs.cursor.com/context/model-context-protocol) |
+| Google Gemini CLI | `settings.json` の `mcpServers` | [Google公式：MCP servers with Gemini CLI](https://geminicli.com/docs/tools/mcp-server/) |
+
+MCP の仕様と用語は、[Model Context Protocol 公式ドキュメント](https://modelcontextprotocol.io/docs/getting-started/intro)
+を参照してください。各クライアントの MCP 対応状況は、アプリのバージョン、契約プラン、組織の
+管理ポリシーによって変わる場合があります。
+
+どの AI クライアントを使っても、WordPress 側の安全制御は共通です。有効な Ability、接続ユーザーの
+capability、OAuth 利用時の scope を満たさなければ実行できません。一方、Ability を自動選択する精度、
+回答の文章、write 系ツールを呼ぶ前に確認を求めるかどうかはクライアントごとに異なります。
+`create-post-draft` を利用する場合は、クライアント側の確認機能だけに依存せず、作成後に WordPress の
+編集画面で必ず内容を確認してください。
+
+## 表示言語
+
+OD MCP Bridge の管理画面は WordPress のサイト言語に従います。「設定」→「一般」の「サイトの言語」が
+日本語の場合は、同梱された日本語翻訳が自動で使用されます。英語環境では原文の英語を表示します。
+ほかの言語も gettext 形式の翻訳ファイルを追加することで対応できます。
+
+Ability の識別名、JSON のキー、capability、OAuth scope は外部連携で使用する固定識別子であるため、
+表示言語が変わっても翻訳されません。
+
 ## できることと、できないこと
 
 Ability は、WordPress 側で実行できる個別の機能を表します。公開コンテンツ系6件と、
@@ -77,18 +124,18 @@ WordPress管理権限を付与しないため、管理者をMCP接続へ使わ�
 `MCP Maintenance Reader` には `edit_posts` を付与しないため、下書き作成には投稿者などの
 投稿作成権限を持つ別の専用ユーザーを使用してください。
 
-## Codex から使うときのプロンプト例
+## Codex などの AI クライアントから使うときのプロンプト例
 
-OD MCP Bridge を MCP server として Codex に接続すると、通常は Ability 名や JSON を
-直接指定せず、調べたいことを自然な日本語で依頼できます。Codex は利用可能な Ability を確認し、
-必要なものを実行して結果を読みやすく要約します。
+OD MCP Bridge を MCP server として Codex などの AI クライアントに接続すると、通常は Ability 名や
+JSON を直接指定せず、調べたいことを自然な日本語で依頼できます。対応クライアントは利用可能な
+Ability を確認し、必要なものを実行して結果を読みやすく要約します。
 
-以下の返答例にあるサイト名、件数、バージョン、日時は説明用のサンプルです。Codex の回答形式は
+以下の返答例にあるサイト名、件数、バージョン、日時は説明用のサンプルです。AI クライアントの回答形式は
 依頼内容によって変わります。正規化された元データが必要な場合は、プロンプトの末尾に
 「取得結果を省略せず JSON で示してください」と加えてください。
 
 保守系 Ability は初期状態で無効です。利用前に「設定」→「OD MCP Bridge」で対象を有効にし、
-必要な capability を持つ専用ユーザーで接続してください。無効な Ability は Codex から発見できず、
+必要な capability を持つ専用ユーザーで接続してください。無効な Ability は AI クライアントから発見できず、
 権限が不足している場合は実行を拒否します。
 投稿下書き作成も初期状態では無効です。意図しない書き込みを避けるため、必要なサイトだけで
 `create-post-draft` を有効にしてください。
@@ -99,7 +146,7 @@ OD MCP Bridge を MCP server として Codex に接続すると、通常は Abil
 
 > 接続している WordPress サイトの基本情報を確認してください。
 
-Codex は「サイト名は Example Site、URL は `https://example.com/`、言語は `ja`、
+AIクライアントは「サイト名は Example Site、URL は `https://example.com/`、言語は `ja`、
 タイムゾーンは `Asia/Tokyo`、WordPress は 7.0」のように返します。
 
 ### 2. 公開済み投稿を探す：`get-posts`
@@ -108,7 +155,7 @@ Codex は「サイト名は Example Site、URL は `https://example.com/`、言�
 
 > 公開済み投稿から「WordPress」を含む記事を更新日の新しい順に5件探してください。
 
-Codex は条件に一致した投稿を一覧にし、各投稿の ID、タイトル、抜粋、更新日時、URLと、
+AIクライアントは条件に一致した投稿を一覧にし、各投稿の ID、タイトル、抜粋、更新日時、URLと、
 総件数・総ページ数を返します。下書き、予約投稿、非公開投稿は含みません。
 
 ### 3. 投稿本文を読む：`get-post`
@@ -117,7 +164,7 @@ Codex は条件に一致した投稿を一覧にし、各投稿の ID、タイ�
 
 > 投稿 ID 123 の本文を取得し、見出し構成と要点をまとめてください。
 
-Codex はタイトル、本文、抜粋、日時、URLを取得したうえで、依頼に合わせて要点を整理します。
+AIクライアントはタイトル、本文、抜粋、日時、URLを取得したうえで、依頼に合わせて要点を整理します。
 本文には WordPress のブロックコメントや HTML が含まれる場合があります。
 
 ### 4. 公開済み固定ページを探す：`get-pages`
@@ -126,7 +173,7 @@ Codex はタイトル、本文、抜粋、日時、URLを取得したうえで�
 
 > 公開中の固定ページから「お問い合わせ」に関係するページを探してください。
 
-Codex は一致した固定ページの ID、タイトル、抜粋、日時、URLとページング情報を返します。
+AIクライアントは一致した固定ページの ID、タイトル、抜粋、日時、URLとページング情報を返します。
 下書きや非公開の固定ページは含みません。
 
 ### 5. 固定ページ本文を読む：`get-page`
@@ -135,7 +182,7 @@ Codex は一致した固定ページの ID、タイトル、抜粋、日時、UR
 
 > 固定ページ ID 456 の内容を読み、訪問者向けの案内事項を箇条書きにしてください。
 
-Codex はタイトル、本文、抜粋、日時、URLに加えて、`parent_id` と `menu_order` を取得し、
+AIクライアントはタイトル、本文、抜粋、日時、URLに加えて、`parent_id` と `menu_order` を取得し、
 依頼された形式で内容を説明します。
 
 ### 6. カテゴリーやタグを確認する：`get-terms`
@@ -144,7 +191,7 @@ Codex はタイトル、本文、抜粋、日時、URLに加えて、`parent_id`
 
 > サイトで使われているカテゴリーを投稿数の多い順に20件見せてください。
 
-Codex はカテゴリー ID、名前、slug、説明、公開投稿数を返します。「タグを」と依頼した場合は
+AIクライアントはカテゴリー ID、名前、slug、説明、公開投稿数を返します。「タグを」と依頼した場合は
 `post_tag` を使います。カスタムタクソノミーや term meta は取得しません。
 
 ### 7. 更新待ちを確認する：`get-update-status`
@@ -153,7 +200,7 @@ WordPress 本体、プラグイン、テーマ、翻訳のキャッシュ済み�
 
 > WordPress サイトに保留中の更新があるか確認し、種類ごとに整理してください。
 
-Codex は権限のある区分について、現在版、更新候補版、件数、最終確認日時を返します。
+AIクライアントは権限のある区分について、現在版、更新候補版、件数、最終確認日時を返します。
 この確認のために外部更新チェックを強制しないため、WordPress の更新キャッシュが古い場合は
 その旨も考慮する必要があります。
 
@@ -163,7 +210,7 @@ Codex は権限のある区分について、現在版、更新候補版、件�
 
 > インストール済みプラグインを、有効・無効と更新の有無が分かる表にしてください。
 
-Codex は slug、表示名、バージョン、有効状態、ネットワーク有効状態、自動更新、更新有無を
+AIクライアントは slug、表示名、バージョン、有効状態、ネットワーク有効状態、自動更新、更新有無を
 表などに整理します。プラグインファイルの絶対パスや内容は返しません。
 
 ### 9. テーマ構成を確認する：`get-themes`
@@ -172,7 +219,7 @@ Codex は slug、表示名、バージョン、有効状態、ネットワーク
 
 > 現在の有効テーマとインストール済みテーマの状態を確認してください。
 
-Codex は stylesheet、表示名、バージョン、有効状態、親テーマ、自動更新、更新有無を返します。
+AIクライアントは stylesheet、表示名、バージョン、有効状態、親テーマ、自動更新、更新有無を返します。
 テーマファイルの内容やサーバー上の絶対パスは取得しません。
 
 ### 10. Site Health の要点を確認する：`get-site-health`
@@ -181,7 +228,7 @@ Codex は stylesheet、表示名、バージョン、有効状態、親テーマ
 
 > サイトヘルスを確認し、重大な問題と改善を推奨されている項目を優先して説明してください。
 
-Codex は全体状態、状態別件数、各テストの名前・状態・説明を返し、重要度順に要約できます。
+AIクライアントは全体状態、状態別件数、各テストの名前・状態・説明を返し、重要度順に要約できます。
 外部 HTTP、loopback、非同期テスト、修正操作、内部パスは対象外です。
 
 ### 11. コンテンツ運用状況を確認する：`get-content-summary`
@@ -190,7 +237,7 @@ Codex は全体状態、状態別件数、各テストの名前・状態・説�
 
 > この30日間のコンテンツ運用状況を、投稿と固定ページに分けて教えてください。
 
-Codex は UTC 基準の集計期間と、投稿・固定ページ別の件数を返します。本文、タイトル、作成者など
+AIクライアントは UTC 基準の集計期間と、投稿・固定ページ別の件数を返します。本文、タイトル、作成者など
 個別コンテンツの情報は含みません。
 
 ### 12. 長期間更新されていないコンテンツを探す：`get-stale-content`
@@ -199,7 +246,7 @@ Codex は UTC 基準の集計期間と、投稿・固定ページ別の件数を
 
 > 2年以上更新されていない公開済み固定ページを、古い順に50件まで調べてください。
 
-Codex は基準日時とともに、対象の ID、種類、タイトル、最終更新日時、URLを返します。
+AIクライアントは基準日時とともに、対象の ID、種類、タイトル、最終更新日時、URLを返します。
 内容が本当に古いかどうかは自動判定しないため、結果を更新候補の洗い出しとして利用します。
 
 ### 13. WP-Cron の状態を確認する：`get-cron-status`
@@ -208,7 +255,7 @@ Codex は基準日時とともに、対象の ID、種類、タイトル、最�
 
 > WP-Cron の遅延と重複候補を確認し、注意が必要なイベントを教えてください。
 
-Codex は hook、次回実行日時、schedule、interval、期限超過状態を返します。同じ時刻・hook・
+AIクライアントは hook、次回実行日時、schedule、interval、期限超過状態を返します。同じ時刻・hook・
 schedule の組み合わせを重複候補として数えますが、秘密情報を含み得る Cron 引数は返しません。
 
 ### 14. 保守状況をまとめて確認する：`get-maintenance-snapshot`
@@ -217,7 +264,7 @@ schedule の組み合わせを重複候補として数えますが、秘密情�
 
 > WordPress サイトの保守スナップショットを取得し、対応が必要そうな項目を整理してください。
 
-Codex はサイト基本情報、更新、Site Health、プラグイン、テーマ、コンテンツ、Cron を
+AIクライアントはサイト基本情報、更新、Site Health、プラグイン、テーマ、コンテンツ、Cron を
 セクションごとに整理します。個別 Ability が無効、権限不足、実行失敗の場合、そのセクションを
 `unavailable` と理由コードで示し、取得できた他のセクションはそのまま返します。
 
@@ -228,7 +275,7 @@ HTTPS、WordPress更新、debug、ファイル編集、自動更新、管理者�
 
 > WordPressサイトのセキュリティ設定を確認し、`attention`、`recommended`、`unknown` の順に対応候補を説明してください。確認できないことは推測しないでください。
 
-Codex は「Core更新がキャッシュ上で利用可能」「本番環境でdebug表示が有効」「ファイルエディターが
+AIクライアントは「Core更新がキャッシュ上で利用可能」「本番環境でdebug表示が有効」「ファイルエディターが
 利用可能」などの観測結果を重要度順に整理します。結果は設定状態の要約であり、脆弱性診断や
 「安全である」という保証ではありません。
 
@@ -242,7 +289,7 @@ Application Passwordは利用可能かどうかだけを確認します。件数
 
 > 「夏季休業のお知らせ」というタイトルで、8月13日から16日まで休業する案内文を投稿の下書きとして作成してください。公開はしないでください。
 
-Codex は本文を整え、重複防止用の UUID を生成して下書き作成を実行します。成功時は投稿 ID、
+AIクライアントは本文を整え、重複防止用の UUID を生成して下書き作成を実行します。成功時は投稿 ID、
 `draft` という状態、管理画面の編集 URL、新規作成か再送結果かを返します。同じ UUID と同じ内容を
 再送しても投稿は増えません。タイトルや本文を変えて同じ UUID を再利用すると競合エラーになります。
 
@@ -267,6 +314,10 @@ GitHub Releases に配布用 ZIP が公開されている場合は、リリー�
 `od-mcp-bridge-0.0.0.zip` 形式のファイルを利用してください。
 
 [GitHub Releases](https://github.com/Olein-jp/od-mcp-bridge/releases)
+
+このマニュアルの内容に対応するバージョンは `0.4.0` です。現在の配布ファイルは
+[od-mcp-bridge-0.4.0.zip](https://github.com/Olein-jp/od-mcp-bridge/releases/download/0.4.0/od-mcp-bridge-0.4.0.zip)
+から取得できます。
 
 GitHub の「Code」→「Download ZIP」で取得できるソースコード ZIP には、実行に必要な
 Composer 依存パッケージが含まれません。実サイトへのインストールには、
@@ -316,7 +367,8 @@ https://example.com/wp-json/mcp/mcp-adapter-default-server
 
 「設定」→「OD MCP Bridge」では、MCP クライアントへ公開する Ability を個別に切り替えられます。
 初期状態では公開コンテンツ系6件だけが有効です。保守系は公開範囲と必要権限を確認してから
-個別に有効化してください。
+個別に有効化してください。write系の `create-post-draft` も初期状態では無効です。実際に下書き作成が
+必要なサイトでのみ有効にし、読み取り専用の接続では無効のままにしてください。
 
 1. 公開したい Ability にチェックを入れる
 2. 公開しない Ability のチェックを外す
@@ -331,12 +383,16 @@ https://example.com/wp-json/mcp/mcp-adapter-default-server
 
 1. 管理者で「ユーザー」→「ユーザーを追加」を開く
 2. MCP 接続専用のユーザー名とメールアドレスを入力する
-3. 公開コンテンツだけなら「購読者」、保守系も使うなら「MCP Maintenance Reader」を選択する
+3. 公開コンテンツだけなら「購読者」、保守系も使うなら「MCP Maintenance Reader」、投稿下書きを作るなら「投稿者」など `edit_posts` を持つロールを選択する
 4. ユーザーを追加する
 
 購読者は、初期状態の6件と `get-stale-content` を利用できます。「MCP Maintenance Reader」は
 公開コンテンツ系に加えて、管理画面で有効にした保守系 Ability を利用できます。管理者を接続に
 使う場合は、すべての管理情報へ到達できる認証情報になるため、保管と失効を特に厳格に行ってください。
+
+「MCP Maintenance Reader」には `edit_posts` がないため、`create-post-draft` は実行できません。
+読み取りと書き込みの用途を分離したい場合は、保守確認用と下書き作成用でユーザーとApplication
+Passwordを分けてください。下書き作成だけを目的に管理者アカウントを使う必要はありません。
 
 専用ユーザーは通常の閲覧者と区別しやすい名前にしてください。ただし、このユーザー名を
 README、Issue、サポートへの問い合わせなど、第三者が閲覧できる場所へ記載しないでください。
@@ -757,6 +813,20 @@ unset WP_API_PASSWORD
 割り当て権限も確認します。作成元と冪等性確認用の値は保護された投稿メタへ保存しますが、
 認証情報、OAuth claim、ユーザー名、メールアドレスは保存しません。
 
+新しく下書きを作成した場合の返却例です。
+
+```json
+{
+  "id": 123,
+  "status": "draft",
+  "edit_url": "https://example.com/wp-admin/post.php?post=123&action=edit",
+  "created": true
+}
+```
+
+同じ `request_id` と同じ内容を再送した場合は、同じ `id` と `created: false` が返ります。
+`edit_url` は認証済みのWordPress管理画面で開き、本文、カテゴリー、表示内容を確認してください。
+
 ### `od-mcp-bridge/get-update-status`
 
 WordPress が保持している更新キャッシュだけを読み取り、確認のための外部通信は行いません。
@@ -896,6 +966,19 @@ Composer 依存パッケージを含む配布用 ZIP をインストールした
 `post_id` が整数になっているか、対象が公開済みの投稿か確認してください。固定ページ、下書き、
 非公開投稿は取得できません。先に `get-posts` を実行すると、取得可能な投稿 ID を確認できます。
 
+### `create-post-draft` が表示されない・実行できない
+
+- 「設定」→「OD MCP Bridge」で `create-post-draft` を有効にしたか確認する
+- 接続ユーザーが `edit_posts` を持つ「投稿者」などのロールか確認する
+- カテゴリー指定時は、指定したカテゴリーIDが存在し、カテゴリー割り当て権限があるか確認する
+- OAuth接続では `od-mcp:discover` と `od-mcp:content:write` の両方があるか確認する
+- 読み取り用の `od-mcp:content:read` だけでは下書き作成できない点を確認する
+
+同じ `request_id` で内容を変更すると競合エラーになります。内容を変えて新しい下書きを作る場合は、
+新しい UUID を使用してください。同一リクエストが処理中の場合も重複を避けるため競合エラーになります。
+少し待ってから、内容と `request_id` を変えずに再送してください。以前作成した投稿を公開・削除した後も、
+同じ `request_id` から別の投稿は作成されません。
+
 ### Node.js のバージョンエラーになる
 
 MCP Inspector と `@automattic/mcp-wordpress-remote` の実行環境で、Node.js 22.19 以上を
@@ -909,11 +992,14 @@ MCP Inspector と `@automattic/mcp-wordpress-remote` の実行環境で、Node.j
 - 通常のログインパスワードを MCP クライアントへ渡していない
 - アプリケーションパスワードをリポジトリや Issue へ保存していない
 - 必要な Ability だけを有効にしている
+- `create-post-draft` は必要なサイトだけで有効にし、作成後の内容と公開判断を人が確認している
+- OAuthでwrite系を使うクライアントだけに `od-mcp:content:write` を許可している
 - 使わなくなったアプリケーションパスワードを失効している
 - 認証情報が漏れた可能性があれば、最初に WordPress 側で失効している
 
-現時点の機能は読み取り専用ですが、公開済み投稿の本文やサイト情報を取得できる点は変わりません。
-接続先と認証情報を適切に管理したうえで利用してください。
+公開コンテンツ・保守系 Ability は読み取り専用ですが、`create-post-draft` は投稿を保存するwrite系です。
+公開や既存投稿の変更は行わないものの、WordPressへデータを書き込む点を理解し、接続先、認証情報、
+有効なAbility、作成された下書きを適切に管理してください。
 
 ## 参考リンク
 

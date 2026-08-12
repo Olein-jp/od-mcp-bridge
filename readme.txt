@@ -3,7 +3,7 @@ Contributors: olein
 Requires at least: 6.9
 Tested up to: 7.0
 Requires PHP: 7.4
-Stable tag: 0.3.0
+Stable tag: 0.4.0
 License: GPLv2 or later
 License URI: https://www.gnu.org/licenses/gpl-2.0.html
 
@@ -20,6 +20,11 @@ Every ability requires an authenticated WordPress user. An idempotent post-draft
 Authentication supports WordPress Application Passwords and an optional OAuth resource-server mode. OAuth mode validates RS256 JWT access tokens against a configured issuer, JWKS URI, audience, subject mapping, per-ability scope, and the existing WordPress capability checks. OD MCP Bridge does not issue or store access or refresh tokens.
 
 == Changelog ==
+
+= 0.4.0 =
+* Add complete bundled Japanese translations and translation catalog tooling.
+* Document use with Codex, Claude, Visual Studio Code, Cursor, and Gemini CLI.
+* Expand the usage guide for draft creation and multilingual environments.
 
 = 0.3.0 =
 * Add an opt-in, idempotent post draft creation ability.

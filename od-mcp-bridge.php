@@ -2,7 +2,7 @@
 /**
  * Plugin Name:       OD MCP Bridge
  * Description:       Safely exposes selected WordPress abilities to MCP clients.
- * Version:           0.3.0
+ * Version:           0.4.0
  * Requires at least: 6.9
  * Requires PHP:      7.4
  * Author:            Koji Kuno
@@ -10,6 +10,7 @@
  * License:           GPL-2.0-or-later
  * License URI:       https://www.gnu.org/licenses/gpl-2.0.html
  * Text Domain:       od-mcp-bridge
+ * Domain Path:       /languages
  * Update URI:        https://github.com/Olein-jp/od-mcp-bridge
  *
  * @package OdMcpBridge
@@ -19,7 +20,21 @@ defined( 'ABSPATH' ) || exit;
 
 require_once __DIR__ . '/vendor/autoload_packages.php';
 
-define( 'OD_MCP_BRIDGE_VERSION', '0.3.0' );
+define( 'OD_MCP_BRIDGE_VERSION', '0.4.0' );
+
+/**
+ * Loads bundled translations for the current WordPress locale.
+ *
+ * @return void
+ */
+function od_mcp_bridge_load_textdomain() {
+	load_plugin_textdomain(
+		'od-mcp-bridge',
+		false,
+		dirname( plugin_basename( __FILE__ ) ) . '/languages'
+	);
+}
+add_action( 'init', 'od_mcp_bridge_load_textdomain', 0 );
 
 register_activation_hook( __FILE__, array( Olein\MCPBridge\Role_Manager::class, 'install' ) );
 register_uninstall_hook( __FILE__, array( Olein\MCPBridge\Role_Manager::class, 'uninstall' ) );

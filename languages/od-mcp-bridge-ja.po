@@ -1,0 +1,752 @@
+msgid ""
+msgstr ""
+"Project-Id-Version: OD MCP Bridge 0.4.0\n"
+"Report-Msgid-Bugs-To: https://github.com/Olein-jp/od-mcp-bridge/issues\n"
+"POT-Creation-Date: 2026-08-12 12:35+0900\n"
+"PO-Revision-Date: 2026-08-12 12:35+0900\n"
+"Last-Translator: Koji Kuno\n"
+"Language-Team: Japanese\n"
+"Language: ja\n"
+"MIME-Version: 1.0\n"
+"Content-Type: text/plain; charset=UTF-8\n"
+"Content-Transfer-Encoding: 8bit\n"
+"Plural-Forms: nplurals=1; plural=0;\n"
+
+#: src/Admin/class-settings-page.php:400
+msgid " (any)"
+msgstr "（いずれか）"
+
+#. translators: 1: enabled ability count, 2: total ability count.
+#: src/Admin/class-connection-diagnostics.php:112
+#, php-format
+msgid "%1$d of %2$d abilities are enabled."
+msgstr "%2$d 件中 %1$d 件の Ability が有効です。"
+
+msgid "A Bearer access token is required."
+msgstr "Bearer アクセストークンが必要です。"
+
+msgid "A draft creation request with this request ID is already in progress."
+msgstr "このリクエスト ID による下書き作成リクエストはすでに処理中です。"
+
+msgid "A unique OAuth signing key could not be selected."
+msgstr "一意の OAuth 署名鍵を選択できませんでした。"
+
+msgid "Ability"
+msgstr "Ability"
+
+#: src/Admin/class-settings-page.php:376
+msgid "Ability access"
+msgstr "Ability のアクセス権"
+
+#: src/Admin/class-settings-page.php:422
+msgid "Action required"
+msgstr "対応が必要"
+
+#: src/Admin/class-settings-page.php:404
+msgid "Allowed"
+msgstr "許可"
+
+#: src/Admin/class-settings-page.php:331
+msgid "Application Password and OAuth"
+msgstr "Application Password と OAuth"
+
+msgid "Application Password authentication is available for the current user."
+msgstr "現在のユーザーは Application Password 認証を利用できます。"
+
+msgid "Application Password authentication is available."
+msgstr "Application Password 認証を利用できます。"
+
+msgid ""
+"Application Password authentication is unavailable globally or for the "
+"current user."
+msgstr ""
+"Application Password 認証はサイト全体または現在のユーザーで利用できません。"
+
+msgid "Application Password authentication is unavailable in this environment."
+msgstr "この環境では Application Password 認証を利用できません。"
+
+#: src/Admin/class-settings-page.php:329
+msgid "Application Password only"
+msgstr "Application Password のみ"
+
+#: src/Admin/class-connection-diagnostics.php:86
+msgid "Application Passwords"
+msgstr "Application Password"
+
+#: src/Admin/class-settings-page.php:106
+msgid "Authentication"
+msgstr "認証"
+
+#: src/Admin/class-settings-page.php:112
+msgid "Authentication mode"
+msgstr "認証モード"
+
+#: src/Admin/class-settings-page.php:113
+msgid "Authorization server issuer"
+msgstr "認可サーバーの Issuer"
+
+msgid ""
+"Automatic core updates are disabled, blocked, or have a recorded failure. "
+"Review the update policy."
+msgstr ""
+"WordPress 本体の自動更新が無効、ブロック済み、または失敗として記録されていま"
+"す。更新方針を確認してください。"
+
+msgid "Automatic update policy checks did not identify a configuration issue."
+msgstr "自動更新方針の確認では設定上の問題は見つかりませんでした。"
+
+#: src/Admin/class-settings-page.php:130
+msgid "Available abilities"
+msgstr "利用可能な Ability"
+
+#: src/Admin/class-settings-page.php:541
+msgid "Categories and tags"
+msgstr "カテゴリーとタグ"
+
+#: src/Admin/class-settings-page.php:360 src/Admin/class-settings-page.php:421
+msgid "Check"
+msgstr "要確認"
+
+#: src/Admin/class-settings-page.php:353
+msgid "Connection diagnostics"
+msgstr "接続診断"
+
+#: src/Admin/class-settings-page.php:547
+msgid "Content summary (maintenance)"
+msgstr "コンテンツ概要（保守）"
+
+#. translators: %s: URL to the Add New User screen.
+#: src/Admin/class-settings-page.php:284
+#, php-format
+msgid ""
+"Create a dedicated user with the Subscriber or MCP Maintenance Reader role "
+"on the <a href=\"%s\">Add New User</a> screen."
+msgstr ""
+"<a href=\"%s\">ユーザーを追加</a>画面で、購読者または MCP Maintenance Reader "
+"ロールの専用ユーザーを作成します。"
+
+#: src/class-abilities.php:604
+msgid "Create a post draft"
+msgstr "投稿の下書きを作成"
+
+#: src/Admin/class-settings-page.php:542
+msgid "Create post draft (write)"
+msgstr "投稿の下書きを作成（書き込み）"
+
+msgid ""
+"Creates only a post draft for the current user, with request ID based "
+"idempotency."
+msgstr ""
+"リクエスト ID による冪等性を保ち、現在のユーザーによる投稿の下書きだけを作成"
+"します。"
+
+msgid "Debug output and logging are disabled."
+msgstr "デバッグ表示とログ記録は無効です。"
+
+msgid ""
+"Debug output is enabled for site visitors in the production environment."
+msgstr "本番環境でサイト訪問者へのデバッグ表示が有効です。"
+
+msgid "Debugging is enabled in a non-production environment."
+msgstr "本番以外の環境でデバッグが有効です。"
+
+msgid ""
+"Debugging is enabled in the production environment. Confirm that this is "
+"intentional."
+msgstr "本番環境でデバッグが有効です。意図した設定か確認してください。"
+
+#: src/Admin/class-settings-page.php:362
+msgid "Details"
+msgstr "詳細"
+
+#. translators: %s: detected PHP version.
+#: src/Admin/class-connection-diagnostics.php:76
+#, php-format
+msgid "Detected PHP %s; version 7.4 or later is required."
+msgstr "PHP %s を検出しました。バージョン 7.4 以降が必要です。"
+
+#. translators: %s: detected WordPress version.
+#: src/Admin/class-connection-diagnostics.php:67
+#, php-format
+msgid "Detected WordPress %s; version 6.9 or later is required."
+msgstr "WordPress %s を検出しました。バージョン 6.9 以降が必要です。"
+
+#: src/Admin/class-settings-page.php:391
+msgid "Disabled"
+msgstr "無効"
+
+#: src/Admin/class-settings-page.php:263 src/Admin/class-settings-page.php:391
+msgid "Enabled"
+msgstr "有効"
+
+#: src/Admin/class-connection-diagnostics.php:108
+msgid "Enabled abilities"
+msgstr "有効な Ability"
+
+#: src/Admin/class-settings-page.php:267
+msgid "Endpoint"
+msgstr "エンドポイント"
+
+#. translators: %s: configured authorization server issuer.
+#: src/OAuth/class-user-mapper.php:113
+#, php-format
+msgid ""
+"Enter the exact sub claim issued for this user by %s. Leave blank to disable "
+"OAuth mapping."
+msgstr ""
+"%s がこのユーザーに発行した正確な sub claim を入力します。OAuth の対応付けを"
+"無効にする場合は空欄にしてください。"
+
+#: src/Admin/class-settings-page.php:341
+msgid ""
+"Exact aud claim for this MCP endpoint. Leave blank to use the displayed MCP "
+"endpoint."
+msgstr ""
+"この MCP エンドポイントに対する正確な aud claim です。空欄の場合は表示中の "
+"MCP エンドポイントを使用します。"
+
+#: src/Admin/class-settings-page.php:339
+msgid ""
+"Exact iss claim and authorization server identifier, for example https://"
+"auth.example.com."
+msgstr ""
+"正確な iss claim と認可サーバー識別子です。例：https://auth.example.com"
+
+#: src/class-abilities.php:668
+msgid "Get Site Health summary"
+msgstr "サイトヘルス概要を取得"
+
+#: src/class-abilities.php:707
+msgid "Get WP-Cron status"
+msgstr "WP-Cron の状態を取得"
+
+#: src/class-abilities.php:780
+msgid "Get a published page"
+msgstr "公開済み固定ページを取得"
+
+#: src/class-abilities.php:780
+msgid "Get a published post"
+msgstr "公開済み投稿を取得"
+
+#: src/class-abilities.php:587
+msgid "Get categories or tags"
+msgstr "カテゴリーまたはタグを取得"
+
+#: src/class-abilities.php:681
+msgid "Get content summary"
+msgstr "コンテンツ概要を取得"
+
+#: src/class-abilities.php:720
+msgid "Get maintenance snapshot"
+msgstr "保守スナップショットを取得"
+
+#: src/class-abilities.php:642
+msgid "Get plugin inventory"
+msgstr "プラグイン一覧を取得"
+
+#: src/class-abilities.php:569
+msgid "Get published pages"
+msgstr "公開済み固定ページ一覧を取得"
+
+#: src/class-abilities.php:551
+msgid "Get published posts"
+msgstr "公開済み投稿一覧を取得"
+
+#: src/class-abilities.php:733
+msgid "Get security posture"
+msgstr "セキュリティ設定概要を取得"
+
+#: src/class-abilities.php:538
+msgid "Get site information"
+msgstr "サイト情報を取得"
+
+#: src/class-abilities.php:694
+msgid "Get stale content"
+msgstr "長期間未更新のコンテンツを取得"
+
+#: src/class-abilities.php:655
+msgid "Get theme inventory"
+msgstr "テーマ一覧を取得"
+
+#: src/class-abilities.php:629
+msgid "Get update status"
+msgstr "更新状況を取得"
+
+msgid "HTTPS"
+msgstr "HTTPS"
+
+#: src/Admin/class-settings-page.php:340
+msgid "HTTPS endpoint containing the issuer public signing keys."
+msgstr "Issuer の公開署名鍵を含む HTTPS エンドポイントです。"
+
+msgid "JWKS URI"
+msgstr "JWKS URI"
+
+msgid "MCP Maintenance Reader"
+msgstr "MCP Maintenance Reader"
+
+#: src/Admin/class-connection-diagnostics.php:103
+msgid "MCP Maintenance Reader role"
+msgstr "MCP Maintenance Reader ロール"
+
+#: src/Admin/class-settings-page.php:257
+msgid "MCP server"
+msgstr "MCP サーバー"
+
+#: src/Admin/class-settings-page.php:550
+msgid "Maintenance snapshot (maintenance)"
+msgstr "保守スナップショット（保守）"
+
+msgid ""
+"Multiple administrator role assignments exist. Review them periodically."
+msgstr ""
+"管理者ロールを割り当てられたユーザーが複数います。定期的に確認してください。"
+
+msgid "No administrator role assignment was found for the current site."
+msgstr "現在のサイトでは管理者ロールの割り当てが見つかりませんでした。"
+
+#: src/Admin/class-settings-page.php:404
+msgid "Not allowed"
+msgstr "不許可"
+
+#: src/Admin/class-connection-diagnostics.php:94
+msgid "OAuth Bearer authentication is configured."
+msgstr "OAuth Bearer 認証が設定されています。"
+
+#: src/Admin/class-connection-diagnostics.php:95
+msgid "OAuth Bearer authentication is disabled."
+msgstr "OAuth Bearer 認証は無効です。"
+
+#: src/Admin/class-connection-diagnostics.php:94
+msgid ""
+"OAuth mode is selected but issuer, JWKS URI, or resource URI is missing."
+msgstr ""
+"OAuth モードが選択されていますが、Issuer、JWKS URI、またはリソース URI が不足"
+"しています。"
+
+#: src/Admin/class-settings-page.php:313
+msgid ""
+"OAuth mode validates RS256 JWT access tokens from one trusted issuer. "
+"Configure only public issuer, JWKS, and resource URLs here; no client secret "
+"or token is stored."
+msgstr ""
+"OAuth モードでは、信頼する単一の Issuer が発行した RS256 JWT アクセストークン"
+"を検証します。ここには公開情報である Issuer、JWKS、リソース URL だけを設定し"
+"ます。クライアントシークレットやトークンは保存しません。"
+
+#: src/Admin/class-settings-page.php:330
+msgid "OAuth only"
+msgstr "OAuth のみ"
+
+#: src/Admin/class-settings-page.php:115
+msgid "OAuth resource URI"
+msgstr "OAuth リソース URI"
+
+#: src/Admin/class-connection-diagnostics.php:91
+msgid "OAuth resource server"
+msgstr "OAuth リソースサーバー"
+
+msgid "OAuth resource server settings are incomplete."
+msgstr "OAuth リソースサーバーの設定が不足しています。"
+
+#: src/Admin/class-settings-page.php:383
+msgid "OAuth scope"
+msgstr "OAuth scope"
+
+#: src/OAuth/class-user-mapper.php:106
+msgid "OAuth subject"
+msgstr "OAuth subject"
+
+msgid "OD MCP Bridge"
+msgstr "OD MCP Bridge"
+
+msgid "OD MCP Bridge OAuth"
+msgstr "OD MCP Bridge OAuth"
+
+#: src/class-plugin.php:65
+msgid "OD MCP Bridge could not load the required WordPress MCP Adapter."
+msgstr ""
+"OD MCP Bridge が必要とする WordPress MCP Adapter を読み込めませんでした。"
+
+msgid "One administrator role assignment exists on the current site."
+msgstr "現在のサイトには管理者ロールの割り当てが 1 件あります。"
+
+msgid "One or more categories do not exist."
+msgstr "指定されたカテゴリーの一部または全部が存在しません。"
+
+#: src/Admin/class-settings-page.php:436
+msgid ""
+"Only enabled abilities are registered and exposed. Public content abilities "
+"are enabled by default. Maintenance abilities and post draft creation are "
+"disabled by default; draft creation requires edit_posts and never grants it "
+"to the MCP Maintenance Reader role."
+msgstr ""
+"有効な Ability だけを登録・公開します。公開コンテンツ系は初期状態で有効です。"
+"保守系と投稿下書き作成は初期状態で無効です。下書き作成には edit_posts が必要"
+"であり、MCP Maintenance Reader ロールには付与されません。"
+
+#: src/Admin/class-connection-diagnostics.php:72
+msgid "PHP version"
+msgstr "PHP バージョン"
+
+#: src/Admin/class-connection-diagnostics.php:98
+msgid "Permalinks"
+msgstr "パーマリンク"
+
+#: src/Admin/class-connection-diagnostics.php:100
+msgid ""
+"Plain permalinks may prevent the displayed MCP endpoint URL from working."
+msgstr ""
+"基本のパーマリンク構造では、表示された MCP エンドポイント URL が動作しない可"
+"能性があります。"
+
+#: src/Admin/class-settings-page.php:544
+msgid "Plugin inventory (maintenance)"
+msgstr "プラグイン一覧（保守）"
+
+#: src/Admin/class-connection-diagnostics.php:100
+msgid "Pretty permalinks are enabled."
+msgstr "基本以外のパーマリンク構造が有効です。"
+
+msgid ""
+"Public content, maintenance information, and opt-in safe content operations "
+"exposed by OD MCP Bridge."
+msgstr ""
+"OD MCP Bridge が公開するコンテンツ、保守情報、および明示的に有効化する安全な"
+"コンテンツ操作です。"
+
+#: src/Admin/class-settings-page.php:540
+msgid "Published page content"
+msgstr "公開済み固定ページ本文"
+
+#: src/Admin/class-settings-page.php:539
+msgid "Published page list"
+msgstr "公開済み固定ページ一覧"
+
+#: src/Admin/class-settings-page.php:538
+msgid "Published post content"
+msgstr "公開済み投稿本文"
+
+#: src/Admin/class-settings-page.php:537
+msgid "Published post list"
+msgstr "公開済み投稿一覧"
+
+#: src/Admin/class-connection-diagnostics.php:105
+msgid ""
+"Reactivating the plugin should repair the dedicated role and its "
+"capabilities."
+msgstr "プラグインを再有効化すると、専用ロールと capability が修復されます。"
+
+#: src/Admin/class-settings-page.php:420
+msgid "Ready"
+msgstr "準備完了"
+
+#: src/Admin/class-settings-page.php:382
+msgid "Required capability"
+msgstr "必要な capability"
+
+msgid ""
+"Returns a bounded local configuration summary without credentials, internal "
+"paths, or external requests."
+msgstr ""
+"認証情報や内部パスを含めず、外部リクエストも行わない限定的なローカル設定概要"
+"を返します。"
+
+msgid "Returns a paginated list from the category or post_tag taxonomy."
+msgstr ""
+"カテゴリーまたは post_tag タクソノミーからページ分割された一覧を返します。"
+
+msgid "Returns a searchable, paginated list of published pages."
+msgstr "検索可能でページ分割された公開済み固定ページ一覧を返します。"
+
+msgid "Returns a searchable, paginated list of published posts."
+msgstr "検索可能でページ分割された公開済み投稿一覧を返します。"
+
+msgid ""
+"Returns cached update information allowed for the current user without "
+"refreshing it."
+msgstr ""
+"更新確認を実行せず、現在のユーザーに許可されたキャッシュ済み更新情報を返しま"
+"す。"
+
+msgid ""
+"Returns enabled maintenance sections while preserving permission and failure "
+"boundaries."
+msgstr "権限と失敗の境界を維持しながら、有効な保守セクションを返します。"
+
+msgid ""
+"Returns post and page counts plus 30-day publishing and update activity in "
+"UTC."
+msgstr ""
+"投稿と固定ページの件数、および直近 30 日間の公開・更新状況を UTC で返します。"
+
+msgid "Returns published posts or pages not modified before a UTC cutoff."
+msgstr ""
+"UTC の基準日時より前から更新されていない公開済み投稿または固定ページを返しま"
+"す。"
+
+msgid "Returns raw block content and public metadata for one published page."
+msgstr ""
+"1 件の公開済み固定ページについて、未加工のブロック本文と公開メタデータを返し"
+"ます。"
+
+msgid "Returns raw block content and public metadata for one published post."
+msgstr ""
+"1 件の公開済み投稿について、未加工のブロック本文と公開メタデータを返します。"
+
+msgid ""
+"Returns sanitized plugin versions and activation, auto-update, and update "
+"states."
+msgstr ""
+"サニタイズされたプラグインのバージョン、有効状態、自動更新、更新状況を返しま"
+"す。"
+
+msgid "Returns sanitized scheduled event timing without event arguments."
+msgstr ""
+"イベント引数を含めず、サニタイズされた予約イベントの実行時刻を返します。"
+
+msgid ""
+"Returns sanitized theme versions and activation, parent, auto-update, and "
+"update states."
+msgstr ""
+"サニタイズされたテーマのバージョン、有効状態、親テーマ、自動更新、更新状況を"
+"返します。"
+
+msgid ""
+"Returns the site name, description, URL, language, timezone, and WordPress "
+"version."
+msgstr ""
+"サイト名、説明、URL、言語、タイムゾーン、WordPress バージョンを返します。"
+
+#: src/Admin/class-settings-page.php:292
+msgid ""
+"Revoke the Application Password from the same profile when the client is no "
+"longer used."
+msgstr ""
+"クライアントを使用しなくなったら、同じプロフィール画面で Application "
+"Password を失効させます。"
+
+msgid ""
+"Runs bounded synchronous Site Health tests and omits actions and internal "
+"paths."
+msgstr ""
+"限定された同期サイトヘルステストを実行し、操作リンクと内部パスを除外します。"
+
+msgid ""
+"Same hook and schedule at the same timestamp; arguments are intentionally "
+"ignored."
+msgstr ""
+"同じ時刻に同じ hook と schedule がある状態です。引数は意図的に判定対象から除"
+"外しています。"
+
+#: src/Admin/class-settings-page.php:551
+msgid "Security posture summary (maintenance)"
+msgstr "セキュリティ設定概要（保守）"
+
+#: src/Admin/class-settings-page.php:381
+msgid "Setting"
+msgstr "設定"
+
+#: src/Admin/class-settings-page.php:291
+msgid ""
+"Sign in as that user and create an Application Password under Users → "
+"Profile."
+msgstr ""
+"そのユーザーでログインし、「ユーザー」→「プロフィール」で Application "
+"Password を作成します。"
+
+#: src/Admin/class-settings-page.php:546
+msgid "Site Health summary (maintenance)"
+msgstr "サイトヘルス概要（保守）"
+
+#: src/Admin/class-settings-page.php:536
+msgid "Site information"
+msgstr "サイト情報"
+
+#: src/Admin/class-settings-page.php:548
+msgid "Stale content (maintenance)"
+msgstr "長期間未更新のコンテンツ（保守）"
+
+#: src/Admin/class-settings-page.php:261 src/Admin/class-settings-page.php:361
+msgid "Status"
+msgstr "状態"
+
+msgid "The Bearer access token does not include the required scope."
+msgstr "Bearer アクセストークンに必要な scope が含まれていません。"
+
+msgid "The Bearer access token is invalid or expired."
+msgstr "Bearer アクセストークンが無効または期限切れです。"
+
+msgid "The Bearer identity is not available on this site."
+msgstr "Bearer のユーザー情報をこのサイトで利用できません。"
+
+msgid "The OAuth access token is invalid."
+msgstr "OAuth アクセストークンが無効です。"
+
+msgid "The OAuth signing key is invalid."
+msgstr "OAuth 署名鍵が無効です。"
+
+msgid "The OAuth signing key response is invalid."
+msgstr "OAuth 署名鍵のレスポンスが無効です。"
+
+msgid "The OAuth signing keys are unavailable."
+msgstr "OAuth 署名鍵を取得できません。"
+
+msgid "The OAuth subject is not mapped to exactly one WordPress user."
+msgstr ""
+"OAuth subject が 1 人の WordPress ユーザーに正しく対応付けられていません。"
+
+msgid ""
+"The built-in plugin and theme file editor is available. Confirm that this "
+"matches the site policy."
+msgstr ""
+"標準のプラグイン・テーマファイルエディターを利用できます。サイトの方針と一致"
+"するか確認してください。"
+
+msgid "The built-in plugin and theme file editor is disabled."
+msgstr "標準のプラグイン・テーマファイルエディターは無効です。"
+
+#: src/Admin/class-connection-diagnostics.php:60
+msgid "The bundled adapter could not be loaded."
+msgstr "同梱の Adapter を読み込めませんでした。"
+
+#: src/Admin/class-connection-diagnostics.php:60
+msgid "The bundled adapter is loaded."
+msgstr "同梱の Adapter は読み込まれています。"
+
+msgid "The cached WordPress update state is unavailable."
+msgstr "キャッシュ済みの WordPress 更新状況を取得できません。"
+
+msgid "The cached update state reports no WordPress core update."
+msgstr "キャッシュ済み更新情報では WordPress 本体の更新はありません。"
+
+msgid ""
+"The cached update state reports that a WordPress core update is available."
+msgstr "キャッシュ済み更新情報では WordPress 本体の更新を利用できます。"
+
+#: src/Admin/class-connection-diagnostics.php:105
+msgid ""
+"The dedicated role has all read-only MCP capabilities and no WordPress "
+"management capabilities."
+msgstr ""
+"専用ロールには読み取り専用の MCP capability がすべてあり、WordPress の管理 "
+"capability はありません。"
+
+msgid "The draft input is invalid."
+msgstr "下書きの入力内容が無効です。"
+
+msgid "The mapped WordPress user is unavailable on this site."
+msgstr "対応付けられた WordPress ユーザーをこのサイトで利用できません。"
+
+msgid "The post created for this request ID is no longer a draft."
+msgstr "このリクエスト ID で作成した投稿はすでに下書きではありません。"
+
+msgid "The request Origin is not allowed for this MCP endpoint."
+msgstr "リクエストの Origin はこの MCP エンドポイントで許可されていません。"
+
+msgid "The requested published content was not found."
+msgstr "指定された公開済みコンテンツが見つかりませんでした。"
+
+#: src/Admin/class-settings-page.php:545
+msgid "Theme inventory (maintenance)"
+msgstr "テーマ一覧（保守）"
+
+#: src/Admin/class-settings-page.php:355
+msgid ""
+"These checks inspect local WordPress configuration only. They do not send an "
+"external request or store credentials."
+msgstr ""
+"この診断は WordPress のローカル設定だけを確認します。外部リクエストの送信や認"
+"証情報の保存は行いません。"
+
+msgid "This ability is not enabled for OAuth access."
+msgstr "この Ability は OAuth アクセスで有効になっていません。"
+
+msgid "This request ID has already been used with different draft content."
+msgstr "このリクエスト ID は異なる下書き内容ですでに使用されています。"
+
+#: src/Admin/class-settings-page.php:263
+msgid "Unavailable"
+msgstr "利用不可"
+
+#: src/Admin/class-settings-page.php:543
+msgid "Update status (maintenance)"
+msgstr "更新状況（保守）"
+
+#: src/Admin/class-connection-diagnostics.php:83
+msgid "Use HTTPS before connecting to a production site."
+msgstr "本番サイトへ接続する前に HTTPS を使用してください。"
+
+#: src/Admin/class-settings-page.php:295
+msgid ""
+"Use HTTPS for this endpoint on production sites. Never paste a real "
+"Application Password into plugin settings, source files, logs, or issues."
+msgstr ""
+"本番サイトではこのエンドポイントに HTTPS を使用してください。実際の "
+"Application Password をプラグイン設定、ソースファイル、ログ、Issue に貼り付け"
+"ないでください。"
+
+#: src/Admin/class-settings-page.php:276
+msgid ""
+"Use a dedicated Subscriber for public content, or the MCP Maintenance Reader "
+"role for maintenance abilities. Store credentials only in the MCP client "
+"environment; this plugin never stores access tokens."
+msgstr ""
+"公開コンテンツには専用の購読者を、保守系 Ability には MCP Maintenance Reader "
+"ロールを使用してください。認証情報は MCP クライアント環境だけに保存してくださ"
+"い。このプラグインはアクセストークンを保存しません。"
+
+#: src/Admin/class-settings-page.php:333
+msgid ""
+"Use the combined mode only during migration because Basic authentication "
+"remains an alternate access path."
+msgstr ""
+"Basic 認証が別のアクセス経路として残るため、併用モードは移行中だけ使用してく"
+"ださい。"
+
+#: src/Admin/class-settings-page.php:549
+msgid "WP-Cron status (maintenance)"
+msgstr "WP-Cron の状態（保守）"
+
+msgid "WordPress MCP Adapter"
+msgstr "WordPress MCP Adapter"
+
+msgid ""
+"WordPress could not determine the plugin and theme auto-update configuration."
+msgstr "WordPress はプラグインとテーマの自動更新設定を判定できませんでした。"
+
+msgid ""
+"WordPress detected a potential plugin or theme auto-update configuration "
+"issue."
+msgstr ""
+"WordPress がプラグインまたはテーマの自動更新設定に問題の可能性を検出しまし"
+"た。"
+
+#: src/Admin/class-connection-diagnostics.php:83
+#: src/class-security-posture.php:44
+msgid "WordPress home and site URLs use HTTPS."
+msgstr "WordPress のホーム URL とサイト URL は HTTPS を使用しています。"
+
+msgid ""
+"WordPress is not configured to use HTTPS. Server support was not tested "
+"because this ability never makes external requests."
+msgstr ""
+"WordPress は HTTPS を使用する設定ではありません。この Ability は外部リクエス"
+"トを行わないため、サーバー側の対応状況は確認していません。"
+
+#: src/Admin/class-connection-diagnostics.php:63
+msgid "WordPress version"
+msgstr "WordPress バージョン"
+
+msgid "categories must contain at most 20 category IDs."
+msgstr "categories に指定できるカテゴリー ID は最大 20 件です。"
+
+msgid "categories must contain unique positive category IDs."
+msgstr "categories には重複しない正のカテゴリー ID を指定してください。"
+
+msgid "request_id must be a valid UUID."
+msgstr "request_id には有効な UUID を指定してください。"
+
+#: src/OAuth/class-user-mapper.php:114
+msgid "the configured issuer"
+msgstr "設定済みの Issuer"

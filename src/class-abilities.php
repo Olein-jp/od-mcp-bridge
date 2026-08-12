@@ -456,7 +456,7 @@ final class Abilities {
 			'total_events'         => $total,
 			'overdue_events'       => $overdue,
 			'duplicate_candidates' => $duplicates,
-			'duplicate_rule'       => 'Same hook and schedule at the same timestamp; arguments are intentionally ignored.',
+			'duplicate_rule'       => __( 'Same hook and schedule at the same timestamp; arguments are intentionally ignored.', 'od-mcp-bridge' ),
 			'events'               => array_slice( $events, 0, $per_page ),
 		);
 	}

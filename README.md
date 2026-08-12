@@ -7,6 +7,10 @@ MCP クライアントへ安全に公開するためのプラグインです。
 実サイトへのインストールから MCP クライアントでの確認、各 Ability の入力項目、
 トラブル対応までの詳しい手順は、[利用マニュアル](docs/user-manual.md)を参照してください。
 
+実サイトへ導入する場合は、GitHub のソースコード ZIP ではなく、最新リリースに添付された
+[od-mcp-bridge-0.4.0.zip](https://github.com/Olein-jp/od-mcp-bridge/releases/download/0.4.0/od-mcp-bridge-0.4.0.zip)
+を使用してください。配布 ZIP には実行に必要な Composer 依存パッケージが含まれています。
+
 ## 提供する Ability
 
 初期状態では、公開情報を扱う次の6件が有効です。
@@ -72,10 +76,21 @@ composer test:integration
 composer lint
 ```
 
+翻訳対象の文言は `od-mcp-bridge` テキストドメインで管理しています。日本語翻訳はプラグインへ
+同梱され、WordPress のサイト言語が日本語の場合に自動で読み込まれます。ほかの言語を追加する場合は
+`languages/od-mcp-bridge.pot` を翻訳元として使用してください。
+
+翻訳対象文字列を変更した場合は、wp-env を起動して POT ファイルを再生成できます。
+
+```bash
+npm run i18n:pot
+```
+
 `composer test:integration` は wp-env の `tests-cli` コンテナで PHPUnit を実行します。
 テストでは WordPress 6.9以上、Ability の登録とスキーマ、権限、公開コンテンツの絞り込み、
 保守情報のサニタイズ、設定による無効化、保守スナップショットの失敗分離、
-セキュリティ設定要約の権限・情報漏えい・外部通信禁止を確認します。
+セキュリティ設定要約の権限・情報漏えい・外部通信禁止に加え、投稿下書きの入力制限、
+権限分離、冪等性、同時実行防止、OAuth write scopeを確認します。
 
 WordPress 管理画面の「設定 → OD MCP Bridge」では、MCP エンドポイントの確認と、
 公開する Ability の有効・無効を設定できます。接続診断では、HTTPS、Application Password、OAuth設定、
@@ -91,6 +106,30 @@ https://example.com/wp-json/mcp/mcp-adapter-default-server
 ```
 
 本番環境では必ず HTTPS の endpoint を使用してください。
+
+### Codex 以外の AI クライアントで使う
+
+OD MCP Bridge は Codex 専用ではありません。WordPress 側は MCP の仕組みを通して Ability を公開するため、
+stdio 形式の MCP サーバーを登録できる AI アプリケーションやエディターから利用できます。
+Claude、Visual Studio Code、Cursor、Gemini CLI などでも、各クライアントが対応する MCP 設定へ
+`@automattic/mcp-wordpress-remote` のコマンド、引数、環境変数を登録するのが基本です。
+
+この README にある `mcpServers` の JSON は構成例です。設定ファイル名やトップレベルのキー、
+登録コマンド、ツール実行時の確認画面はクライアントごとに異なります。必ず利用中のバージョンに
+対応する各社の公式ドキュメントを確認してください。
+
+| 提供元・クライアント | MCP 登録に関する一次情報 |
+| --- | --- |
+| OpenAI Codex／ChatGPTデスクトップアプリ | [OpenAI公式：Model Context Protocol](https://developers.openai.com/codex/mcp/) |
+| Anthropic Claude Code | [Anthropic公式：Connect Claude Code to tools via MCP](https://code.claude.com/docs/en/mcp) |
+| Anthropic Claude Desktop | [Anthropic公式：Getting Started with Local MCP Servers on Claude Desktop](https://support.claude.com/en/articles/10949351-getting-started-with-local-mcp-servers-on-claude-desktop) |
+| Microsoft Visual Studio Code | [Microsoft公式：Add and manage MCP servers in VS Code](https://code.visualstudio.com/docs/agent-customization/mcp-servers) |
+| Cursor | [Cursor公式：Model Context Protocol](https://docs.cursor.com/context/model-context-protocol) |
+| Google Gemini CLI | [Google公式：MCP servers with Gemini CLI](https://geminicli.com/docs/tools/mcp-server/) |
+
+MCP そのものの仕様と考え方は、[Model Context Protocol 公式ドキュメント](https://modelcontextprotocol.io/docs/getting-started/intro)
+を参照してください。クライアントのプラン、組織ポリシー、対応 transport、認証方式によっては
+MCP 機能を利用できない場合があります。
 
 ブラウザから送信されるMCPリクエストは、DNS Rebinding対策として `Origin` を検証します。
 WordPressのhome/site Originは既定で許可され、Originを送らないサーバー間クライアントも利用できます。
@@ -128,6 +167,8 @@ https://example.com/wp-json/od-mcp-bridge/v1/oauth-protected-resource
 2. 公開コンテンツ系だけを使う場合は「購読者（Subscriber）」、保守系も使う場合は
    プラグインが作成する「MCP Maintenance Reader」ロールを選びます。この専用ロールには
    プラグイン有効化、テーマ変更、設定変更などのWordPress管理権限は含まれません。
+   `create-post-draft` を使う場合は「投稿者（Author）」など `edit_posts` を持つ専用ユーザーを
+   別に用意します。MCP Maintenance Readerには投稿作成権限を付与しません。
 3. 専用ユーザーでログインし、「ユーザー → プロフィール」の「Application Passwords」で
    `OD MCP Bridge` などの識別しやすい名前を入力して発行します。
 4. 表示された Application Password は一度だけコピーし、MCP クライアント側の
@@ -146,6 +187,9 @@ Password の詳細は [WordPress REST API Handbook](https://developer.wordpress.
 `@automattic/mcp-wordpress-remote` を stdio MCP server として起動し、WordPress の
 HTTP endpoint へ中継します。次はサンプル値だけを含む設定例です。実際の値はローカルの
 MCP クライアント設定または、そのクライアントを起動する環境から渡してください。
+
+Codex 以外で使う場合も、登録する stdio プロセスの実体は同じです。次の例にある `command`、`args`、
+`env` を、利用するクライアントの公式ドキュメントに従って移してください。
 
 ```json
 {
@@ -245,6 +289,21 @@ mcp_inspector \
   --tool-args-json '{"ability_name":"od-mcp-bridge/get-terms","parameters":{"taxonomy":"category","per_page":20}}'
 ```
 
+投稿下書きを作成する場合は、管理画面で `create-post-draft` を明示的に有効化し、`edit_posts` を
+持つ専用ユーザーで接続します。`request_id` は実行ごとに新しい UUID を生成し、同じリクエストを
+通信上の理由で再送するときだけ同じ値を使います。
+
+```bash
+mcp_inspector \
+  --method tools/call \
+  --tool-name mcp-adapter-execute-ability \
+  --tool-args-json '{"ability_name":"od-mcp-bridge/create-post-draft","parameters":{"request_id":"550e8400-e29b-41d4-a716-446655440000","title":"夏季休業のお知らせ","content":"<!-- wp:paragraph --><p>8月13日から16日まで休業します。</p><!-- /wp:paragraph -->"}}'
+```
+
+成功時は投稿ID、固定値 `draft` の状態、管理画面の編集URL、実際に新規作成したかを示す
+`created` が返ります。プラグインから公開は行わないため、編集URLで内容を確認したうえで、
+公開はWordPress管理画面から人が行ってください。
+
 認証拒否も確認します。次のリクエストは Application Password を送らないため、HTTP
 `401` になる必要があります。
 
@@ -289,5 +348,5 @@ git push origin 0.1.1
 ローカルでは次のコマンドで同じ ZIP を生成できます。
 
 ```bash
-npm run package -- 0.3.0
+npm run package -- 0.4.0
 ```
