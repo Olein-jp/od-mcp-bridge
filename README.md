@@ -74,8 +74,8 @@ composer lint
 セキュリティ設定要約の権限・情報漏えい・外部通信禁止を確認します。
 
 WordPress 管理画面の「設定 → OD MCP Bridge」では、MCP エンドポイントの確認と、
-公開する Ability の有効・無効を設定できます。接続診断では、HTTPS、Application Password、
-MCP Adapter、専用ロール、Abilityごとの必要capabilityを外部通信なしで確認できます。
+公開する Ability の有効・無効を設定できます。接続診断では、HTTPS、Application Password、OAuth設定、
+MCP Adapter、専用ロール、Abilityごとの必要capabilityとOAuth scopeを外部通信なしで確認できます。
 初期状態では公開情報を扱う6件だけが有効です。
 
 ## MCP 接続
@@ -87,6 +87,26 @@ https://example.com/wp-json/mcp/mcp-adapter-default-server
 ```
 
 本番環境では必ず HTTPS の endpoint を使用してください。
+
+### OAuth 2.1リソースサーバー
+
+Application Passwordに加えて、外部認可サーバーが発行するRS256 JWTアクセストークンを
+検証できます。「設定 → OD MCP Bridge」でIssuer、JWKS URI、OAuth resource URIを設定し、
+MCP専用ユーザーのプロフィールへトークンの `sub` を対応付けます。
+
+OAuth接続では、MCP初期化と探索用の `od-mcp:discover` に加え、実行対象に応じて
+`od-mcp:content:read` または `od-mcp:maintenance:read` が必要です。Scopeと既存のWordPress
+capabilityを両方満たした場合だけAbilityが実行されます。未登録の第三者AbilityはOAuth経由では
+既定で拒否します。
+
+Protected Resource Metadata:
+
+```text
+https://example.com/wp-json/od-mcp-bridge/v1/oauth-protected-resource
+```
+
+認可サーバーの構成、ユーザー対応付け、対応トークン、移行手順は
+[利用マニュアルのOAuth 2.1で接続する](docs/user-manual.md#oauth-21で接続する)を参照してください。
 
 ### 専用ユーザーと Application Password
 

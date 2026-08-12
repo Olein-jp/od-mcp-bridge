@@ -14,6 +14,15 @@ use WP\MCP\Core\McpAdapter;
  */
 final class Settings_Page {
 
+	/** Application Password authentication only. */
+	const AUTH_APPLICATION_PASSWORD = 'application_password';
+
+	/** OAuth Bearer authentication only. */
+	const AUTH_OAUTH = 'oauth';
+
+	/** Application Password and OAuth authentication. */
+	const AUTH_BOTH = 'both';
+
 	/**
 	 * Option name.
 	 *
@@ -92,6 +101,30 @@ final class Settings_Page {
 		);
 
 		add_settings_section(
+			'od_mcp_bridge_authentication',
+			esc_html__( 'Authentication', 'od-mcp-bridge' ),
+			array( $this, 'render_authentication_description' ),
+			self::PAGE_SLUG
+		);
+
+		$auth_fields = array(
+			'mode'     => __( 'Authentication mode', 'od-mcp-bridge' ),
+			'issuer'   => __( 'Authorization server issuer', 'od-mcp-bridge' ),
+			'jwks_uri' => __( 'JWKS URI', 'od-mcp-bridge' ),
+			'resource' => __( 'OAuth resource URI', 'od-mcp-bridge' ),
+		);
+		foreach ( $auth_fields as $key => $label ) {
+			add_settings_field(
+				'od_mcp_bridge_oauth_' . $key,
+				esc_html( $label ),
+				array( $this, 'render_authentication_field' ),
+				self::PAGE_SLUG,
+				'od_mcp_bridge_authentication',
+				array( 'key' => $key )
+			);
+		}
+
+		add_settings_section(
 			'od_mcp_bridge_abilities',
 			esc_html__( 'Available abilities', 'od-mcp-bridge' ),
 			array( $this, 'render_abilities_description' ),
@@ -131,19 +164,59 @@ final class Settings_Page {
 	 * Sanitizes the settings payload using an allowlist.
 	 *
 	 * @param mixed $input Submitted settings.
-	 * @return array<string, array<string, bool>>
+	 * @return array<string, mixed>
 	 */
 	public function sanitize_settings( $input ) {
-		$sanitized = array( 'abilities' => array() );
+		$sanitized = array(
+			'abilities' => array(),
+			'oauth'     => $this->get_defaults()['oauth'],
+		);
 		$submitted = is_array( $input ) && isset( $input['abilities'] ) && is_array( $input['abilities'] )
 			? $input['abilities']
+			: array();
+		$oauth     = is_array( $input ) && isset( $input['oauth'] ) && is_array( $input['oauth'] )
+			? $input['oauth']
 			: array();
 
 		foreach ( $this->abilities as $key ) {
 			$sanitized['abilities'][ $key ] = isset( $submitted[ $key ] ) && '1' === (string) $submitted[ $key ];
 		}
 
+		$modes                          = array( self::AUTH_APPLICATION_PASSWORD, self::AUTH_OAUTH, self::AUTH_BOTH );
+		$mode                           = isset( $oauth['mode'] ) ? sanitize_key( $oauth['mode'] ) : self::AUTH_APPLICATION_PASSWORD;
+		$sanitized['oauth']['mode']     = in_array( $mode, $modes, true ) ? $mode : self::AUTH_APPLICATION_PASSWORD;
+		$sanitized['oauth']['issuer']   = $this->sanitize_oauth_url( isset( $oauth['issuer'] ) ? $oauth['issuer'] : '' );
+		$sanitized['oauth']['jwks_uri'] = $this->sanitize_oauth_url( isset( $oauth['jwks_uri'] ) ? $oauth['jwks_uri'] : '' );
+		$sanitized['oauth']['resource'] = $this->sanitize_oauth_url( isset( $oauth['resource'] ) ? $oauth['resource'] : '' );
+
 		return $sanitized;
+	}
+
+	/** Returns the configured authentication mode. */
+	public function get_auth_mode() {
+		return $this->get_settings()['oauth']['mode'];
+	}
+
+	/** Returns the exact configured authorization server issuer. */
+	public function get_oauth_issuer() {
+		return $this->get_settings()['oauth']['issuer'];
+	}
+
+	/** Returns the configured JSON Web Key Set URI. */
+	public function get_oauth_jwks_uri() {
+		return $this->get_settings()['oauth']['jwks_uri'];
+	}
+
+	/** Returns the canonical OAuth resource URI. */
+	public function get_oauth_resource() {
+		$resource = $this->get_settings()['oauth']['resource'];
+
+		return '' !== $resource ? $resource : rest_url( 'mcp/mcp-adapter-default-server' );
+	}
+
+	/** Checks whether all settings required for built-in OAuth validation exist. */
+	public function is_oauth_configured() {
+		return '' !== $this->get_oauth_issuer() && '' !== $this->get_oauth_jwks_uri() && '' !== $this->get_oauth_resource();
 	}
 
 	/**
@@ -199,7 +272,7 @@ final class Settings_Page {
 			<?php $this->render_connection_diagnostics(); ?>
 
 			<p class="description">
-				<?php esc_html_e( 'Use a dedicated Subscriber for public content, or the MCP Maintenance Reader role for maintenance abilities. Store credentials only in the MCP client environment; this plugin never stores them.', 'od-mcp-bridge' ); ?>
+				<?php esc_html_e( 'Use a dedicated Subscriber for public content, or the MCP Maintenance Reader role for maintenance abilities. Store credentials only in the MCP client environment; this plugin never stores access tokens.', 'od-mcp-bridge' ); ?>
 			</p>
 			<ol>
 				<li>
@@ -229,6 +302,46 @@ final class Settings_Page {
 				?>
 			</form>
 		</div>
+		<?php
+	}
+
+	/** Renders authentication settings guidance. */
+	public function render_authentication_description() {
+		printf(
+			'<p>%s</p>',
+			esc_html__( 'OAuth mode validates RS256 JWT access tokens from one trusted issuer. Configure only public issuer, JWKS, and resource URLs here; no client secret or token is stored.', 'od-mcp-bridge' )
+		);
+	}
+
+	/**
+	 * Renders one authentication setting.
+	 *
+	 * @param array<string,string> $args Field arguments.
+	 */
+	public function render_authentication_field( $args ) {
+		$key      = isset( $args['key'] ) ? $args['key'] : '';
+		$settings = $this->get_settings()['oauth'];
+
+		if ( 'mode' === $key ) {
+			?>
+			<select name="<?php echo esc_attr( self::OPTION_NAME ); ?>[oauth][mode]">
+				<option value="<?php echo esc_attr( self::AUTH_APPLICATION_PASSWORD ); ?>" <?php selected( $settings['mode'], self::AUTH_APPLICATION_PASSWORD ); ?>><?php esc_html_e( 'Application Password only', 'od-mcp-bridge' ); ?></option>
+				<option value="<?php echo esc_attr( self::AUTH_OAUTH ); ?>" <?php selected( $settings['mode'], self::AUTH_OAUTH ); ?>><?php esc_html_e( 'OAuth only', 'od-mcp-bridge' ); ?></option>
+				<option value="<?php echo esc_attr( self::AUTH_BOTH ); ?>" <?php selected( $settings['mode'], self::AUTH_BOTH ); ?>><?php esc_html_e( 'Application Password and OAuth', 'od-mcp-bridge' ); ?></option>
+			</select>
+			<p class="description"><?php esc_html_e( 'Use the combined mode only during migration because Basic authentication remains an alternate access path.', 'od-mcp-bridge' ); ?></p>
+			<?php
+			return;
+		}
+
+		$descriptions = array(
+			'issuer'   => __( 'Exact iss claim and authorization server identifier, for example https://auth.example.com.', 'od-mcp-bridge' ),
+			'jwks_uri' => __( 'HTTPS endpoint containing the issuer public signing keys.', 'od-mcp-bridge' ),
+			'resource' => __( 'Exact aud claim for this MCP endpoint. Leave blank to use the displayed MCP endpoint.', 'od-mcp-bridge' ),
+		);
+		?>
+		<input type="url" class="regular-text code" name="<?php echo esc_attr( self::OPTION_NAME ); ?>[oauth][<?php echo esc_attr( $key ); ?>]" value="<?php echo esc_attr( $settings[ $key ] ); ?>" placeholder="https://" />
+		<p class="description"><?php echo esc_html( $descriptions[ $key ] ); ?></p>
 		<?php
 	}
 
@@ -266,6 +379,7 @@ final class Settings_Page {
 					<th scope="col"><?php esc_html_e( 'Ability', 'od-mcp-bridge' ); ?></th>
 					<th scope="col"><?php esc_html_e( 'Setting', 'od-mcp-bridge' ); ?></th>
 					<th scope="col"><?php esc_html_e( 'Required capability', 'od-mcp-bridge' ); ?></th>
+					<th scope="col"><?php esc_html_e( 'OAuth scope', 'od-mcp-bridge' ); ?></th>
 					<th scope="col"><?php esc_html_e( 'MCP Maintenance Reader', 'od-mcp-bridge' ); ?></th>
 				</tr>
 			</thead>
@@ -285,6 +399,7 @@ final class Settings_Page {
 								<?php esc_html_e( ' (any)', 'od-mcp-bridge' ); ?>
 							<?php endif; ?>
 						</td>
+						<td><code><?php echo esc_html( $ability['oauth_scope'] ); ?></code></td>
 						<td><?php echo $ability['role_access'] ? esc_html__( 'Allowed', 'od-mcp-bridge' ) : esc_html__( 'Not allowed', 'od-mcp-bridge' ); ?></td>
 					</tr>
 				<?php endforeach; ?>
@@ -345,24 +460,29 @@ final class Settings_Page {
 	/**
 	 * Returns stored settings merged with defaults.
 	 *
-	 * @return array<string, array<string, bool>>
+	 * @return array<string, mixed>
 	 */
 	private function get_settings() {
 		$settings = get_option( self::OPTION_NAME, $this->get_defaults() );
 
-		if ( ! is_array( $settings ) || ! isset( $settings['abilities'] ) || ! is_array( $settings['abilities'] ) ) {
+		if ( ! is_array( $settings ) ) {
 			return $this->get_defaults();
 		}
 
+		$defaults  = $this->get_defaults();
+		$abilities = isset( $settings['abilities'] ) && is_array( $settings['abilities'] ) ? $settings['abilities'] : array();
+		$oauth     = isset( $settings['oauth'] ) && is_array( $settings['oauth'] ) ? $settings['oauth'] : array();
+
 		return array(
-			'abilities' => array_merge( $this->get_defaults()['abilities'], $settings['abilities'] ),
+			'abilities' => array_merge( $defaults['abilities'], $abilities ),
+			'oauth'     => array_merge( $defaults['oauth'], $oauth ),
 		);
 	}
 
 	/**
 	 * Returns default settings.
 	 *
-	 * @return array<string, array<string, bool>>
+	 * @return array<string, mixed>
 	 */
 	private function get_defaults() {
 		$defaults = array_fill_keys( $this->abilities, false );
@@ -373,7 +493,35 @@ final class Settings_Page {
 
 		return array(
 			'abilities' => $defaults,
+			'oauth'     => array(
+				'mode'     => self::AUTH_APPLICATION_PASSWORD,
+				'issuer'   => '',
+				'jwks_uri' => '',
+				'resource' => '',
+			),
 		);
+	}
+
+	/**
+	 * Sanitizes an OAuth endpoint URL and rejects insecure remote HTTP URLs.
+	 *
+	 * @param mixed $value Submitted value.
+	 * @return string
+	 */
+	private function sanitize_oauth_url( $value ) {
+		$url = esc_url_raw( is_string( $value ) ? trim( $value ) : '', array( 'http', 'https' ) );
+		if ( '' === $url ) {
+			return '';
+		}
+
+		$scheme = wp_parse_url( $url, PHP_URL_SCHEME );
+		$host   = strtolower( (string) wp_parse_url( $url, PHP_URL_HOST ) );
+		$local  = in_array( $host, array( 'localhost', '127.0.0.1', '::1' ), true );
+		if ( 'https' !== $scheme && ! $local ) {
+			return '';
+		}
+
+		return $url;
 	}
 
 	/**

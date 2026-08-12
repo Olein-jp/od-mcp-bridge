@@ -8,6 +8,7 @@
 namespace Olein\MCPBridge;
 
 use Olein\MCPBridge\Admin\Settings_Page;
+use Olein\MCPBridge\OAuth\Scope_Policy;
 use Throwable;
 use WP_Error;
 use WP_Query;
@@ -727,7 +728,7 @@ final class Abilities {
 			'output_schema'       => $output_schema,
 			'execute_callback'    => $execute_callback,
 			'permission_callback' => $permission_callback,
-			'meta'                => $this->get_readonly_meta(),
+			'meta'                => $this->get_readonly_meta( $key ),
 		);
 
 		if ( is_array( $input_schema ) ) {
@@ -1076,8 +1077,14 @@ final class Abilities {
 		return strcmp( $left['stylesheet'], $right['stylesheet'] );
 	}
 
-	/** Returns metadata shared by all read-only abilities. */
-	private function get_readonly_meta() {
+	/**
+	 * Returns metadata shared by all read-only abilities.
+	 *
+	 * @param string $key Ability key.
+	 */
+	private function get_readonly_meta( $key ) {
+		$scope = ( new Scope_Policy() )->get_ability_scope( 'od-mcp-bridge/' . $key );
+
 		return array(
 			'annotations'  => array(
 				'readonly'    => true,
@@ -1086,6 +1093,7 @@ final class Abilities {
 			),
 			'show_in_rest' => true,
 			'mcp'          => array( 'public' => true ),
+			'oauth'        => array( 'required_scope' => $scope ),
 		);
 	}
 

@@ -50,21 +50,24 @@ Ability は、WordPress 側で実行できる個別の機能を表します。�
 
 ## Ability 一覧と必要権限
 
-| Ability | 内容 | 必要な capability | 初期状態 |
-| --- | --- | --- | --- |
-| `get-site-info` | サイト基本情報 | `read` | 有効 |
-| `get-posts` / `get-post` | 公開済み投稿の一覧・本文 | `read` | 有効 |
-| `get-pages` / `get-page` | 公開済み固定ページの一覧・本文 | `read` | 有効 |
-| `get-terms` | カテゴリーまたはタグ | `read` | 有効 |
-| `get-update-status` | キャッシュ済み更新状況 | `od_mcp_bridge_view_*_updates` | 無効 |
-| `get-plugins` | プラグイン状態 | `od_mcp_bridge_view_plugins` | 無効 |
-| `get-themes` | テーマ状態 | `od_mcp_bridge_view_themes` | 無効 |
-| `get-site-health` | 限定的なサイトヘルス結果 | `od_mcp_bridge_view_site_health` | 無効 |
-| `get-content-summary` | 投稿・固定ページの件数と30日間の活動 | `od_mcp_bridge_view_content_summary` | 無効 |
-| `get-stale-content` | 長期間更新されていない公開コンテンツ | `read` | 無効 |
-| `get-cron-status` | WP-Cron の実行予定 | `od_mcp_bridge_view_cron` | 無効 |
-| `get-maintenance-snapshot` | 保守情報の集約結果 | `od_mcp_bridge_view_maintenance` | 無効 |
-| `get-security-posture` | セキュリティ設定の要約 | `od_mcp_bridge_view_security` | 無効 |
+| Ability | 内容 | 必要な capability | OAuth scope | 初期状態 |
+| --- | --- | --- | --- | --- |
+| `get-site-info` | サイト基本情報 | `read` | `od-mcp:content:read` | 有効 |
+| `get-posts` / `get-post` | 公開済み投稿の一覧・本文 | `read` | `od-mcp:content:read` | 有効 |
+| `get-pages` / `get-page` | 公開済み固定ページの一覧・本文 | `read` | `od-mcp:content:read` | 有効 |
+| `get-terms` | カテゴリーまたはタグ | `read` | `od-mcp:content:read` | 有効 |
+| `get-update-status` | キャッシュ済み更新状況 | `od_mcp_bridge_view_*_updates` | `od-mcp:maintenance:read` | 無効 |
+| `get-plugins` | プラグイン状態 | `od_mcp_bridge_view_plugins` | `od-mcp:maintenance:read` | 無効 |
+| `get-themes` | テーマ状態 | `od_mcp_bridge_view_themes` | `od-mcp:maintenance:read` | 無効 |
+| `get-site-health` | 限定的なサイトヘルス結果 | `od_mcp_bridge_view_site_health` | `od-mcp:maintenance:read` | 無効 |
+| `get-content-summary` | 投稿・固定ページの件数と30日間の活動 | `od_mcp_bridge_view_content_summary` | `od-mcp:maintenance:read` | 無効 |
+| `get-stale-content` | 長期間更新されていない公開コンテンツ | `read` | `od-mcp:maintenance:read` | 無効 |
+| `get-cron-status` | WP-Cron の実行予定 | `od_mcp_bridge_view_cron` | `od-mcp:maintenance:read` | 無効 |
+| `get-maintenance-snapshot` | 保守情報の集約結果 | `od_mcp_bridge_view_maintenance` | `od-mcp:maintenance:read` | 無効 |
+| `get-security-posture` | セキュリティ設定の要約 | `od_mcp_bridge_view_security` | `od-mcp:maintenance:read` | 無効 |
+
+OAuth接続では、表のScopeに加えてMCP接続とAbility探索用の `od-mcp:discover` が必要です。
+ScopeだけではWordPressの権限を付与できず、対応するWordPress capabilityも満たす必要があります。
 
 保守系の独自 capability は、プラグインが作成する「MCP Maintenance Reader」ロールと
 管理者ロールへ付与されます。この専用ロールにはプラグイン有効化、テーマ変更、設定変更などの
@@ -280,10 +283,10 @@ https://example.com/wp-json/mcp/mcp-adapter-default-server
 
 - WordPress MCP Adapterの読み込み状態
 - WordPressとPHPの最低バージョン
-- HTTPSとApplication Passwordの利用可否
+- HTTPS、Application Password、OAuth設定の状態
 - パーマリンク設定
 - MCP Maintenance Readerロールの最小権限
-- 有効なAbility数と、Abilityごとの必要capability
+- 有効なAbility数と、Abilityごとの必要capability・OAuth scope
 
 「Ready」以外の項目がある場合はDetailsの説明を確認してください。この診断は外部のMCPクライアントへ
 接続せず、ユーザー名やApplication Passwordも入力・保存しません。実際の認証を含む疎通確認は、
@@ -333,6 +336,72 @@ README、Issue、サポートへの問い合わせなど、第三者が閲覧で
 
 アプリケーションパスワードの項目が表示されない場合は、最初にサイトが HTTPS で
 提供されているか確認してください。
+
+## OAuth 2.1で接続する
+
+OAuth接続は、外部の認可サーバーが発行したアクセストークンをOD MCP Bridgeで検証する方式です。
+OD MCP Bridgeは認可画面、クライアント登録、認可コード、リフレッシュトークンを発行しません。
+これらは接続先の認可サーバーとMCPクライアントが担当します。
+
+### 対応するアクセストークン
+
+組み込みの検証機能は、次の条件を満たすJWTアクセストークンに対応します。
+
+- 署名アルゴリズムが `RS256`
+- `iss` が管理画面に設定したIssuerと完全に一致する
+- `aud` が設定したOAuth resource URIを含む
+- `sub` がWordPressユーザーに設定したOAuth subjectと完全に一致する
+- 有効な `exp` を持ち、`nbf` と `iat` がある場合も有効期間内である
+- `scope` が空白区切りで必要なScopeを含む
+- 公開鍵をHTTPSのJWKS URIから取得できる
+
+アクセストークン、認可コード、リフレッシュトークン、クライアントシークレットは
+WordPressへ保存しません。JWKSから取得した公開鍵情報だけを短時間キャッシュします。
+
+### WordPress側を設定する
+
+1. 認可サーバーでAuthorization CodeとPKCE S256を有効にし、MCPクライアントを登録する
+2. 「設定」→「OD MCP Bridge」のAuthenticationでIssuer、JWKS URI、OAuth resource URIを入力する
+3. Authentication modeを最初は「Application Password and OAuth」、移行確認後は「OAuth only」にする
+4. MCP専用ユーザーの編集画面を開き、「OD MCP Bridge OAuth」のOAuth subjectへトークンの `sub` を入力する
+5. 公開コンテンツだけなら購読者、保守情報も使うならMCP Maintenance Readerロールを割り当てる
+6. 認可サーバーで `od-mcp:discover` と、用途に応じた読み取りScopeをクライアントへ許可する
+
+OAuth resource URIを空欄にすると、表示中のMCP endpointが使用されます。認可サーバーが
+アクセストークンへ設定する `aud` と、一文字単位で同じ値にしてください。
+
+「Application Password and OAuth」は移行確認用です。このモードでは有効なApplication Passwordも
+代替の認証経路になるため、OAuth移行後は「OAuth only」を推奨します。
+
+### MetadataとChallengeを確認する
+
+Protected Resource Metadataは次のURLで公開されます。
+
+```text
+https://example.com/wp-json/od-mcp-bridge/v1/oauth-protected-resource
+```
+
+認証なしでMCP endpointへアクセスすると `401` になり、`WWW-Authenticate` ヘッダーの
+`resource_metadata` からこのURLを案内します。Scopeが不足する場合は `403` と、追加で必要な
+Scopeを含むChallengeを返します。
+
+```bash
+curl --include \
+  --request POST \
+  --header 'Content-Type: application/json' \
+  --data '{"jsonrpc":"2.0","id":1,"method":"initialize","params":{"protocolVersion":"2025-11-25","capabilities":{},"clientInfo":{"name":"oauth-check","version":"1.0.0"}}}' \
+  'https://example.com/wp-json/mcp/mcp-adapter-default-server'
+```
+
+本番環境ではWebサーバーやリバースプロキシが `Authorization` と `WWW-Authenticate` を削除しない
+ことも確認してください。実トークンをコマンド履歴、アクセスログ、Issue、チャットへ貼り付けないでください。
+
+### 外部プロバイダーへの対応
+
+Opaque TokenやRS256以外のトークンを使用する場合は、WordPressの
+`od_mcp_bridge_oauth_validate_token` フィルターでプロバイダー固有の検証を実装できます。
+検証結果には `iss`、`sub`、`od_mcp_scopes` を含め、Issuer、Audience、期限、失効状態を
+コールバック側で必ず検証してください。生トークンをログやDBへ保存してはいけません。
 
 ## MCP クライアントを設定する
 

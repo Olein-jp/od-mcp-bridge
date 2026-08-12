@@ -8,6 +8,7 @@
 namespace Olein\MCPBridge\Admin;
 
 use Olein\MCPBridge\Role_Manager;
+use Olein\MCPBridge\OAuth\Scope_Policy;
 use WP\MCP\Core\McpAdapter;
 
 /** Builds local environment and ability access diagnostics. */
@@ -49,6 +50,9 @@ final class Connection_Diagnostics {
 			$enabled_count += $this->settings->is_ability_enabled( $key ) ? 1 : 0;
 		}
 
+		$auth_mode    = $this->settings->get_auth_mode();
+		$oauth_active = Settings_Page::AUTH_APPLICATION_PASSWORD !== $auth_mode;
+
 		return array(
 			'mcp_adapter'           => $this->format_check(
 				__( 'WordPress MCP Adapter', 'od-mcp-bridge' ),
@@ -80,8 +84,15 @@ final class Connection_Diagnostics {
 			),
 			'application_passwords' => $this->format_check(
 				__( 'Application Passwords', 'od-mcp-bridge' ),
-				wp_is_application_passwords_available() ? 'good' : 'error',
+				wp_is_application_passwords_available() ? 'good' : ( Settings_Page::AUTH_OAUTH === $auth_mode ? 'warning' : 'error' ),
 				wp_is_application_passwords_available() ? __( 'Application Password authentication is available.', 'od-mcp-bridge' ) : __( 'Application Password authentication is unavailable in this environment.', 'od-mcp-bridge' )
+			),
+			'oauth'                 => $this->format_check(
+				__( 'OAuth resource server', 'od-mcp-bridge' ),
+				$oauth_active ? ( $this->settings->is_oauth_configured() ? 'good' : 'error' ) : 'warning',
+				$oauth_active
+					? ( $this->settings->is_oauth_configured() ? __( 'OAuth Bearer authentication is configured.', 'od-mcp-bridge' ) : __( 'OAuth mode is selected but issuer, JWKS URI, or resource URI is missing.', 'od-mcp-bridge' ) )
+					: __( 'OAuth Bearer authentication is disabled.', 'od-mcp-bridge' )
 			),
 			'permalinks'            => $this->format_check(
 				__( 'Permalinks', 'od-mcp-bridge' ),
@@ -114,6 +125,7 @@ final class Connection_Diagnostics {
 	public function get_ability_access() {
 		$requirements = Role_Manager::get_ability_requirements();
 		$role         = get_role( Role_Manager::ROLE );
+		$scope_policy = new Scope_Policy();
 		$rows         = array();
 
 		foreach ( $this->settings->get_ability_keys() as $key ) {
@@ -130,6 +142,7 @@ final class Connection_Diagnostics {
 				'capabilities' => $requirement['capabilities'],
 				'match'        => $requirement['match'],
 				'role_access'  => $allowed,
+				'oauth_scope'  => $scope_policy->get_ability_scope( 'od-mcp-bridge/' . $key ),
 			);
 		}
 

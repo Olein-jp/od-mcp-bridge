@@ -17,6 +17,8 @@ Public-content abilities expose site information, published posts and pages, cat
 
 Every ability is read-only and requires an authenticated WordPress user. Maintenance abilities are disabled by default and require their corresponding administrative capabilities.
 
+Authentication supports WordPress Application Passwords and an optional OAuth resource-server mode. OAuth mode validates RS256 JWT access tokens against a configured issuer, JWKS URI, audience, subject mapping, per-ability scope, and the existing WordPress capability checks. OD MCP Bridge does not issue or store access or refresh tokens.
+
 == Changelog ==
 
 = 0.2.0 =
