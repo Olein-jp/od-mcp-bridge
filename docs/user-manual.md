@@ -396,6 +396,25 @@ curl --include \
 本番環境ではWebサーバーやリバースプロキシが `Authorization` と `WWW-Authenticate` を削除しない
 ことも確認してください。実トークンをコマンド履歴、アクセスログ、Issue、チャットへ貼り付けないでください。
 
+### 実サイトでOAuth E2Eを確認する
+
+認可サーバーでAuthorization Code + PKCE S256を完了し、`od-mcp:discover` と
+`od-mcp:content:read` を持つアクセストークンを取得してから実行します。対話的なシェル入力など、
+トークンをシェル履歴へ残さない方法で環境変数を設定してください。
+
+```bash
+export OD_MCP_URL='https://example.com/wp-json/mcp/mcp-adapter-default-server'
+export OD_MCP_METADATA_URL='https://example.com/wp-json/od-mcp-bridge/v1/oauth-protected-resource'
+read -r -s OD_MCP_ACCESS_TOKEN
+export OD_MCP_ACCESS_TOKEN
+composer test:oauth:live
+unset OD_MCP_ACCESS_TOKEN
+```
+
+このテストは、Metadataの取得、未認証時の401 Bearer Challenge、Bearerトークンを使ったMCP
+initialize、session IDの受領、`od-mcp-bridge/get-site-info` の実行を確認します。成功すると
+`OAuth MCP smoke test passed.` と表示します。失敗時のレスポンス本文やトークンは表示しません。
+
 ブラウザクライアントが `Origin` ヘッダーを送る場合、WordPressのhome/site Origin以外は
 既定で403になります。別Originを利用する統合では、テーマや連携用プラグインから次のように
 完全なOriginを追加します。ワイルドカードやリクエスト値の無条件追加は行わないでください。

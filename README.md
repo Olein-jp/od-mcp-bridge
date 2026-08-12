@@ -113,6 +113,10 @@ https://example.com/wp-json/od-mcp-bridge/v1/oauth-protected-resource
 認可サーバーの構成、ユーザー対応付け、対応トークン、移行手順は
 [利用マニュアルのOAuth 2.1で接続する](docs/user-manual.md#oauth-21で接続する)を参照してください。
 
+実サイトで取得したアクセストークンを使うE2Eスモークテストは、トークンをファイルや引数へ
+書かず環境変数へ設定して `composer test:oauth:live` を実行できます。必要な変数と確認内容は
+[利用マニュアルの実サイトでOAuth E2Eを確認する](docs/user-manual.md#実サイトでoauth-e2eを確認する)を参照してください。
+
 ### 専用ユーザーと Application Password
 
 1. 管理者で「ユーザー → ユーザーを追加」を開き、MCP 接続専用ユーザーを作成します。
