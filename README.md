@@ -102,7 +102,8 @@ MCP専用ユーザーのプロフィールへトークンの `sub` を対応付�
 OAuth接続では、MCP初期化と探索用の `od-mcp:discover` に加え、実行対象に応じて
 `od-mcp:content:read` または `od-mcp:maintenance:read` が必要です。Scopeと既存のWordPress
 capabilityを両方満たした場合だけAbilityが実行されます。未登録の第三者AbilityはOAuth経由では
-既定で拒否します。
+既定で拒否します。OAuthでのAbility探索結果には、現在のアクセストークンのScopeで実行できる
+Abilityだけが表示され、対象Scopeを持たないAbilityの詳細取得も拒否されます。
 
 Protected Resource Metadata:
 

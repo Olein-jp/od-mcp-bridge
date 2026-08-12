@@ -8,6 +8,7 @@
 use Olein\MCPBridge\Admin\Settings_Page;
 use Olein\MCPBridge\OAuth\Jwt_Validator;
 use Olein\MCPBridge\OAuth\Resource_Server;
+use Olein\MCPBridge\OAuth\Scope_Aware_Discovery;
 use Olein\MCPBridge\OAuth\Scope_Policy;
 use Olein\MCPBridge\OAuth\User_Mapper;
 
@@ -113,6 +114,48 @@ class Test_OD_MCP_Bridge_OAuth_Resource_Server extends WP_UnitTestCase {
 		$this->assertSame( 'oauth_unmapped_ability', $response->get_data()['code'] );
 	}
 
+	/** Confirms OAuth discovery returns only abilities covered by token scopes. */
+	public function test_discovery_result_is_limited_to_token_scopes() {
+		$user_id = self::factory()->user->create( array( 'role' => 'subscriber' ) );
+		$this->map_user( $user_id );
+		$this->filter_validated_claims( array( Scope_Policy::DISCOVER, Scope_Policy::CONTENT_READ ) );
+
+		$server  = $this->create_resource_server();
+		$request = $this->create_tool_request( 'mcp-adapter-discover-abilities' );
+		$this->assertNull( $server->protect_mcp_request( null, null, $request ) );
+
+		$discovery = new Scope_Aware_Discovery( $server, new Scope_Policy() );
+		$result    = $discovery->filter_discovery_result(
+			array(
+				'abilities' => array(
+					array( 'name' => 'od-mcp-bridge/get-posts' ),
+					array( 'name' => 'od-mcp-bridge/get-update-status' ),
+					array( 'name' => 'other-plugin/public-operation' ),
+				),
+			),
+			array(),
+			'mcp-adapter-discover-abilities'
+		);
+
+		$this->assertSame( array( array( 'name' => 'od-mcp-bridge/get-posts' ) ), $result['abilities'] );
+	}
+
+	/** Confirms get-ability-info cannot reveal an ability outside token scopes. */
+	public function test_get_ability_info_requires_the_target_scope() {
+		$user_id = self::factory()->user->create( array( 'role' => 'administrator' ) );
+		$this->map_user( $user_id );
+		$this->filter_validated_claims( array( Scope_Policy::DISCOVER, Scope_Policy::CONTENT_READ ) );
+
+		$response = $this->create_resource_server()->protect_mcp_request(
+			null,
+			null,
+			$this->create_tool_request( 'mcp-adapter-get-ability-info', 'od-mcp-bridge/get-update-status' )
+		);
+
+		$this->assertSame( 403, $response->get_status() );
+		$this->assertStringContainsString( Scope_Policy::MAINTENANCE_READ, $response->get_headers()['WWW-Authenticate'] );
+	}
+
 	/**
 	 * Creates a configured OAuth resource server.
 	 *
@@ -153,9 +196,27 @@ class Test_OD_MCP_Bridge_OAuth_Resource_Server extends WP_UnitTestCase {
 	 * @return WP_REST_Request
 	 */
 	private function create_ability_request( $ability_name ) {
+		return $this->create_tool_request( 'mcp-adapter-execute-ability', $ability_name );
+	}
+
+	/**
+	 * Creates an MCP wrapper-tool request.
+	 *
+	 * @param string $tool_name    MCP wrapper tool name.
+	 * @param string $ability_name Target ability name.
+	 * @return WP_REST_Request
+	 */
+	private function create_tool_request( $tool_name, $ability_name = '' ) {
 		$request = new WP_REST_Request( 'POST', Resource_Server::MCP_ROUTE );
 		$request->set_header( 'authorization', 'Bearer opaque-test-token' );
 		$request->set_header( 'content-type', 'application/json' );
+		$arguments = array();
+		if ( '' !== $ability_name ) {
+			$arguments['ability_name'] = $ability_name;
+			if ( 'mcp-adapter-execute-ability' === $tool_name ) {
+				$arguments['parameters'] = array();
+			}
+		}
 		$request->set_body(
 			wp_json_encode(
 				array(
@@ -163,11 +224,8 @@ class Test_OD_MCP_Bridge_OAuth_Resource_Server extends WP_UnitTestCase {
 					'id'      => 1,
 					'method'  => 'tools/call',
 					'params'  => array(
-						'name'      => 'mcp-adapter-execute-ability',
-						'arguments' => array(
-							'ability_name' => $ability_name,
-							'parameters'   => array(),
-						),
+						'name'      => $tool_name,
+						'arguments' => $arguments,
 					),
 				)
 			)

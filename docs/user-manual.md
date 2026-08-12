@@ -370,6 +370,10 @@ WordPressへ保存しません。JWKSから取得した公開鍵情報だけを�
 OAuth resource URIを空欄にすると、表示中のMCP endpointが使用されます。認可サーバーが
 アクセストークンへ設定する `aud` と、一文字単位で同じ値にしてください。
 
+OAuth接続でAbilityを探索すると、アクセストークンが持つScopeに対応するAbilityだけが返ります。
+たとえば `od-mcp:discover od-mcp:content:read` のトークンには公開コンテンツ系だけが表示され、
+保守系Abilityの探索結果と詳細は表示されません。Application Password接続の探索結果は従来どおりです。
+
 「Application Password and OAuth」は移行確認用です。このモードでは有効なApplication Passwordも
 代替の認証経路になるため、OAuth移行後は「OAuth only」を推奨します。
 

@@ -10,6 +10,7 @@ namespace Olein\MCPBridge;
 use Olein\MCPBridge\Admin\Settings_Page;
 use Olein\MCPBridge\OAuth\Jwt_Validator;
 use Olein\MCPBridge\OAuth\Resource_Server;
+use Olein\MCPBridge\OAuth\Scope_Aware_Discovery;
 use Olein\MCPBridge\OAuth\Scope_Policy;
 use Olein\MCPBridge\OAuth\User_Mapper;
 use WP\MCP\Core\McpAdapter;
@@ -27,16 +28,19 @@ final class Plugin {
 	public static function boot() {
 		add_action( 'init', array( Role_Manager::class, 'maybe_install' ), 1 );
 
-		$settings  = new Settings_Page();
-		$abilities = new Abilities( $settings );
-		$mapper    = new User_Mapper( $settings );
-		$oauth     = new Resource_Server( $settings, new Jwt_Validator( $settings ), $mapper, new Scope_Policy() );
-		$security  = new Mcp_Request_Security();
+		$settings     = new Settings_Page();
+		$abilities    = new Abilities( $settings );
+		$mapper       = new User_Mapper( $settings );
+		$scope_policy = new Scope_Policy();
+		$oauth        = new Resource_Server( $settings, new Jwt_Validator( $settings ), $mapper, $scope_policy );
+		$discovery    = new Scope_Aware_Discovery( $oauth, $scope_policy );
+		$security     = new Mcp_Request_Security();
 
 		$settings->register_hooks();
 		$abilities->register_hooks();
 		$mapper->register_hooks();
 		$oauth->register_hooks();
+		$discovery->register_hooks();
 		$security->register_hooks();
 
 		if ( class_exists( McpAdapter::class ) ) {
