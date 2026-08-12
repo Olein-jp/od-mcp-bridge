@@ -31,11 +31,13 @@ final class Plugin {
 		$abilities = new Abilities( $settings );
 		$mapper    = new User_Mapper( $settings );
 		$oauth     = new Resource_Server( $settings, new Jwt_Validator( $settings ), $mapper, new Scope_Policy() );
+		$security  = new Mcp_Request_Security();
 
 		$settings->register_hooks();
 		$abilities->register_hooks();
 		$mapper->register_hooks();
 		$oauth->register_hooks();
+		$security->register_hooks();
 
 		if ( class_exists( McpAdapter::class ) ) {
 			McpAdapter::instance();

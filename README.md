@@ -88,6 +88,11 @@ https://example.com/wp-json/mcp/mcp-adapter-default-server
 
 本番環境では必ず HTTPS の endpoint を使用してください。
 
+ブラウザから送信されるMCPリクエストは、DNS Rebinding対策として `Origin` を検証します。
+WordPressのhome/site Originは既定で許可され、Originを送らないサーバー間クライアントも利用できます。
+別Originのブラウザクライアントを許可する場合は、ワイルドカードを使わず
+`od_mcp_bridge_allowed_origins` フィルターへ完全なOriginを追加してください。
+
 ### OAuth 2.1リソースサーバー
 
 Application Passwordに加えて、外部認可サーバーが発行するRS256 JWTアクセストークンを

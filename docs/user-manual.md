@@ -396,6 +396,20 @@ curl --include \
 本番環境ではWebサーバーやリバースプロキシが `Authorization` と `WWW-Authenticate` を削除しない
 ことも確認してください。実トークンをコマンド履歴、アクセスログ、Issue、チャットへ貼り付けないでください。
 
+ブラウザクライアントが `Origin` ヘッダーを送る場合、WordPressのhome/site Origin以外は
+既定で403になります。別Originを利用する統合では、テーマや連携用プラグインから次のように
+完全なOriginを追加します。ワイルドカードやリクエスト値の無条件追加は行わないでください。
+
+```php
+add_filter(
+	'od_mcp_bridge_allowed_origins',
+	static function ( $origins ) {
+		$origins[] = 'https://mcp-client.example.com';
+		return $origins;
+	}
+);
+```
+
 ### 外部プロバイダーへの対応
 
 Opaque TokenやRS256以外のトークンを使用する場合は、WordPressの
