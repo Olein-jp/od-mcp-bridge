@@ -23,8 +23,11 @@ jobs:
           - name: WordPress 6.9 / PHP 8.2
             core: WordPress/WordPress#6.9
             php: '8.2'
-          - name: Latest WordPress / PHP 8.2
-            core: ''
+          - name: WordPress 7.1 / PHP 7.4
+            core: WordPress/WordPress#7.1
+            php: '7.4'
+          - name: WordPress 7.1 / PHP 8.2
+            core: WordPress/WordPress#7.1
             php: '8.2'
           - name: Latest WordPress / PHP 8.4
             core: ''

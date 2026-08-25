@@ -1,9 +1,9 @@
 === OD MCP Bridge ===
 Contributors: olein
 Requires at least: 6.9
-Tested up to: 7.0
+Tested up to: 7.1
 Requires PHP: 7.4
-Stable tag: 0.4.0
+Stable tag: 0.4.1
 License: GPLv2 or later
 License URI: https://www.gnu.org/licenses/gpl-2.0.html
 
@@ -20,6 +20,9 @@ Every ability requires an authenticated WordPress user. An idempotent post-draft
 Authentication supports WordPress Application Passwords and an optional OAuth resource-server mode. OAuth mode validates RS256 JWT access tokens against a configured issuer, JWKS URI, audience, subject mapping, per-ability scope, and the existing WordPress capability checks. OD MCP Bridge does not issue or store access or refresh tokens.
 
 == Changelog ==
+
+= 0.4.1 =
+* Confirm compatibility with WordPress 7.1.
 
 = 0.4.0 =
 * Add complete bundled Japanese translations and translation catalog tooling.

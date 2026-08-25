@@ -315,8 +315,8 @@ GitHub Releases に配布用 ZIP が公開されている場合は、リリー�
 
 [GitHub Releases](https://github.com/Olein-jp/od-mcp-bridge/releases)
 
-このマニュアルの内容に対応するバージョンは `0.4.0` です。現在の配布ファイルは
-[od-mcp-bridge-0.4.0.zip](https://github.com/Olein-jp/od-mcp-bridge/releases/download/0.4.0/od-mcp-bridge-0.4.0.zip)
+このマニュアルの内容に対応するバージョンは `0.4.1` です。現在の配布ファイルは
+[od-mcp-bridge-0.4.1.zip](https://github.com/Olein-jp/od-mcp-bridge/releases/download/0.4.1/od-mcp-bridge-0.4.1.zip)
 から取得できます。
 
 GitHub の「Code」→「Download ZIP」で取得できるソースコード ZIP には、実行に必要な

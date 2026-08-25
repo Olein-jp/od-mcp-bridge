@@ -8,7 +8,7 @@ MCP クライアントへ安全に公開するためのプラグインです。
 トラブル対応までの詳しい手順は、[利用マニュアル](docs/user-manual.md)を参照してください。
 
 実サイトへ導入する場合は、GitHub のソースコード ZIP ではなく、最新リリースに添付された
-[od-mcp-bridge-0.4.0.zip](https://github.com/Olein-jp/od-mcp-bridge/releases/download/0.4.0/od-mcp-bridge-0.4.0.zip)
+[od-mcp-bridge-0.4.1.zip](https://github.com/Olein-jp/od-mcp-bridge/releases/download/0.4.1/od-mcp-bridge-0.4.1.zip)
 を使用してください。配布 ZIP には実行に必要な Composer 依存パッケージが含まれています。
 
 ## 提供する Ability
@@ -348,5 +348,5 @@ git push origin 0.1.1
 ローカルでは次のコマンドで同じ ZIP を生成できます。
 
 ```bash
-npm run package -- 0.4.0
+npm run package -- 0.4.1
 ```
