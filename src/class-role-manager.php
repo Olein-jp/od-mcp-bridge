@@ -19,7 +19,7 @@ final class Role_Manager {
 	const OPTION_NAME = 'od_mcp_bridge_role_schema_version';
 
 	/** Current role schema version. */
-	const SCHEMA_VERSION = '2';
+	const SCHEMA_VERSION = '3';
 
 	/** Custom maintenance capabilities. */
 	const VIEW_CORE_UPDATES   = 'od_mcp_bridge_view_core_updates';
@@ -32,6 +32,9 @@ final class Role_Manager {
 	const VIEW_CRON           = 'od_mcp_bridge_view_cron';
 	const VIEW_MAINTENANCE    = 'od_mcp_bridge_view_maintenance';
 	const VIEW_SECURITY       = 'od_mcp_bridge_view_security';
+
+	/** Dedicated capability for creating block template parts through MCP. */
+	const CREATE_TEMPLATE_PARTS = 'od_mcp_bridge_create_template_parts';
 
 	/** Installs or upgrades the role schema when needed. */
 	public static function maybe_install() {
@@ -46,7 +49,6 @@ final class Role_Manager {
 		foreach ( self::get_capabilities() as $capability ) {
 			$role_capabilities[ $capability ] = true;
 		}
-
 		add_role(
 			self::ROLE,
 			__( 'MCP Maintenance Reader', 'od-mcp-bridge' ),
@@ -66,6 +68,9 @@ final class Role_Manager {
 				$admin->add_cap( $capability );
 			}
 		}
+		if ( $admin ) {
+			$admin->add_cap( self::CREATE_TEMPLATE_PARTS );
+		}
 
 		update_option( self::OPTION_NAME, self::SCHEMA_VERSION, false );
 	}
@@ -82,6 +87,7 @@ final class Role_Manager {
 			foreach ( self::get_capabilities() as $capability ) {
 				$role->remove_cap( $capability );
 			}
+			$role->remove_cap( self::CREATE_TEMPLATE_PARTS );
 		}
 
 		delete_option( self::OPTION_NAME );
@@ -127,6 +133,14 @@ final class Role_Manager {
 			'get-terms'                => $read,
 			'create-post-draft'        => array(
 				'capabilities' => array( 'edit_posts' ),
+				'match'        => 'all',
+			),
+			'create-page-draft'        => array(
+				'capabilities' => array( 'edit_pages' ),
+				'match'        => 'all',
+			),
+			'create-template-part'     => array(
+				'capabilities' => array( self::CREATE_TEMPLATE_PARTS ),
 				'match'        => 'all',
 			),
 			'get-update-status'        => array(

@@ -15,7 +15,7 @@ OD MCP Bridge connects the WordPress Abilities API to MCP clients through the of
 
 Public-content abilities expose site information, published posts and pages, categories, and tags. Optional maintenance abilities expose capability-filtered update, plugin, theme, Site Health, content activity, stale content, and WP-Cron summaries. A maintenance snapshot composes enabled sections while preserving permission and failure boundaries.
 
-Every ability requires an authenticated WordPress user. An idempotent post-draft creation ability is available as an opt-in write operation and is disabled by default. It fixes the post type, status, and author on the server and requires edit_posts. Maintenance abilities are also disabled by default and require their corresponding administrative capabilities.
+Every ability requires an authenticated WordPress user. Idempotent post-draft, page-draft, and block-template-part creation abilities are available as opt-in write operations and are disabled by default. Draft abilities fix the post type, status, and author on the server. Template parts are limited to the active block theme, never overwrite existing parts, and require a dedicated capability. Maintenance abilities are also disabled by default and require their corresponding administrative capabilities. Page-draft and template-part creation use Application Password authentication only.
 
 Authentication supports WordPress Application Passwords and an optional OAuth resource-server mode. OAuth mode validates RS256 JWT access tokens against a configured issuer, JWKS URI, audience, subject mapping, per-ability scope, and the existing WordPress capability checks. OD MCP Bridge does not issue or store access or refresh tokens.
 

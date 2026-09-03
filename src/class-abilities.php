@@ -64,6 +64,8 @@ final class Abilities {
 			'get-page'                 => 'register_page',
 			'get-terms'                => 'register_terms',
 			'create-post-draft'        => 'register_post_draft',
+			'create-page-draft'        => 'register_page_draft',
+			'create-template-part'     => 'register_template_part',
 			'get-update-status'        => 'register_update_status',
 			'get-plugins'              => 'register_plugins',
 			'get-themes'               => 'register_themes',
@@ -622,6 +624,38 @@ final class Abilities {
 		);
 	}
 
+	/** Registers safe, idempotent page draft creation. */
+	private function register_page_draft() {
+		$creator = new Draft_Page_Creator();
+		$key     = 'create-page-draft';
+
+		$this->register_write_ability(
+			$key,
+			__( 'Create a page draft', 'od-mcp-bridge' ),
+			__( 'Creates only a page draft for the current user, with request ID based idempotency.', 'od-mcp-bridge' ),
+			$this->get_page_draft_input_schema(),
+			$this->get_draft_output_schema(),
+			array( $creator, 'execute' ),
+			array( $creator, 'check_permissions' )
+		);
+	}
+
+	/** Registers safe, idempotent template part creation. */
+	private function register_template_part() {
+		$creator = new Template_Part_Creator();
+		$key     = 'create-template-part';
+
+		$this->register_write_ability(
+			$key,
+			__( 'Create a template part', 'od-mcp-bridge' ),
+			__( 'Creates a new database-backed template part for the active block theme without overwriting an existing part.', 'od-mcp-bridge' ),
+			$this->get_template_part_input_schema(),
+			$this->get_template_part_output_schema(),
+			array( $creator, 'execute' ),
+			array( $creator, 'check_permissions' )
+		);
+	}
+
 	/** Registers cached update status. */
 	private function register_update_status() {
 		$this->register_readonly_ability(
@@ -766,6 +800,42 @@ final class Abilities {
 		}
 
 		wp_register_ability( 'od-mcp-bridge/' . $key, $args );
+	}
+
+	/**
+	 * Registers one opt-in write ability.
+	 *
+	 * @param string   $key                 Ability key.
+	 * @param string   $label               Ability label.
+	 * @param string   $description         Ability description.
+	 * @param array    $input_schema        Input schema.
+	 * @param array    $output_schema       Output schema.
+	 * @param callable $execute_callback    Execution callback.
+	 * @param callable $permission_callback Permission callback.
+	 */
+	private function register_write_ability( $key, $label, $description, $input_schema, $output_schema, $execute_callback, $permission_callback ) {
+		wp_register_ability(
+			'od-mcp-bridge/' . $key,
+			array(
+				'label'               => $label,
+				'description'         => $description,
+				'category'            => self::CATEGORY,
+				'input_schema'        => $input_schema,
+				'output_schema'       => $output_schema,
+				'execute_callback'    => $execute_callback,
+				'permission_callback' => $permission_callback,
+				'meta'                => array(
+					'annotations'  => array(
+						'readonly'    => false,
+						'destructive' => false,
+						'idempotent'  => true,
+					),
+					'show_in_rest' => true,
+					'mcp'          => array( 'public' => true ),
+					'oauth'        => array( 'required_scope' => ( new Scope_Policy() )->get_ability_scope( 'od-mcp-bridge/' . $key ) ),
+				),
+			)
+		);
 	}
 
 	/**
@@ -1219,6 +1289,50 @@ final class Abilities {
 
 	/** Returns the post draft result schema. */
 	private function get_post_draft_output_schema() {
+		return $this->get_draft_output_schema();
+	}
+
+	/** Returns the page draft input schema. */
+	private function get_page_draft_input_schema() {
+		return $this->object_schema(
+			array(
+				'request_id' => array(
+					'type'      => 'string',
+					'minLength' => 36,
+					'maxLength' => 36,
+					'pattern'   => '^[0-9a-fA-F]{8}-[0-9a-fA-F]{4}-[1-5][0-9a-fA-F]{3}-[89abAB][0-9a-fA-F]{3}-[0-9a-fA-F]{12}$',
+				),
+				'title'      => array(
+					'type'      => 'string',
+					'minLength' => 1,
+					'maxLength' => 200,
+				),
+				'content'    => array(
+					'type'      => 'string',
+					'maxLength' => 200000,
+				),
+				'excerpt'    => array(
+					'type'      => 'string',
+					'maxLength' => 5000,
+				),
+				'parent_id'  => array(
+					'type'    => 'integer',
+					'minimum' => 0,
+					'default' => 0,
+				),
+				'menu_order' => array(
+					'type'    => 'integer',
+					'minimum' => 0,
+					'maximum' => 100000,
+					'default' => 0,
+				),
+			),
+			array( 'request_id', 'title', 'content' )
+		);
+	}
+
+	/** Returns the common draft creation result schema. */
+	private function get_draft_output_schema() {
 		return $this->object_schema(
 			array(
 				'id'       => array(
@@ -1233,6 +1347,65 @@ final class Abilities {
 				'created'  => array( 'type' => 'boolean' ),
 			),
 			array( 'id', 'status', 'edit_url', 'created' )
+		);
+	}
+
+	/** Returns the template part input schema. */
+	private function get_template_part_input_schema() {
+		return $this->object_schema(
+			array(
+				'request_id' => array(
+					'type'      => 'string',
+					'minLength' => 36,
+					'maxLength' => 36,
+					'pattern'   => '^[0-9a-fA-F]{8}-[0-9a-fA-F]{4}-[1-5][0-9a-fA-F]{3}-[89abAB][0-9a-fA-F]{3}-[0-9a-fA-F]{12}$',
+				),
+				'title'      => array(
+					'type'      => 'string',
+					'minLength' => 1,
+					'maxLength' => 200,
+				),
+				'slug'       => array(
+					'type'      => 'string',
+					'minLength' => 1,
+					'maxLength' => 200,
+					'pattern'   => '^[a-z0-9]+(?:-[a-z0-9]+)*$',
+				),
+				'content'    => array(
+					'type'      => 'string',
+					'maxLength' => 200000,
+				),
+				'area'       => array(
+					'type'      => 'string',
+					'minLength' => 1,
+					'maxLength' => 200,
+				),
+			),
+			array( 'request_id', 'title', 'slug', 'content', 'area' )
+		);
+	}
+
+	/** Returns the template part creation result schema. */
+	private function get_template_part_output_schema() {
+		$keys = array( 'id', 'template_id', 'status', 'slug', 'theme', 'area', 'created' );
+
+		return $this->object_schema(
+			array(
+				'id'          => array(
+					'type'    => 'integer',
+					'minimum' => 1,
+				),
+				'template_id' => array( 'type' => 'string' ),
+				'status'      => array(
+					'type' => 'string',
+					'enum' => array( 'publish' ),
+				),
+				'slug'        => array( 'type' => 'string' ),
+				'theme'       => array( 'type' => 'string' ),
+				'area'        => array( 'type' => 'string' ),
+				'created'     => array( 'type' => 'boolean' ),
+			),
+			$keys
 		);
 	}
 

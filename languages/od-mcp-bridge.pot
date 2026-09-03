@@ -390,9 +390,9 @@ msgstr ""
 #: src/Admin/class-settings-page.php:436
 msgid ""
 "Only enabled abilities are registered and exposed. Public content abilities "
-"are enabled by default. Maintenance abilities and post draft creation are "
-"disabled by default; draft creation requires edit_posts and never grants it "
-"to the MCP Maintenance Reader role."
+"are enabled by default. Maintenance and write abilities are disabled by "
+"default; write capabilities are never granted to the MCP Maintenance Reader "
+"role."
 msgstr ""
 
 #: src/Admin/class-connection-diagnostics.php:72
@@ -756,4 +756,73 @@ msgstr ""
 
 #: src/OAuth/class-user-mapper.php:114
 msgid "the configured issuer"
+msgstr ""
+
+msgid "A page draft creation request with this request ID is already in progress."
+msgstr ""
+
+msgid "A template part creation request for this slug is already in progress."
+msgstr ""
+
+msgid "A template part creation request with this request ID is already in progress."
+msgstr ""
+
+msgid "A template part with this slug already exists or the slug is reserved by another theme."
+msgstr ""
+
+msgid "Create a page draft"
+msgstr ""
+
+msgid "Create a template part"
+msgstr ""
+
+msgid "Create page draft (write)"
+msgstr ""
+
+msgid "Create template part (write)"
+msgstr ""
+
+msgid "Creates a new database-backed template part for the active block theme without overwriting an existing part."
+msgstr ""
+
+msgid "Creates only a page draft for the current user, with request ID based idempotency."
+msgstr ""
+
+msgid "Template parts can only be created while a block theme is active."
+msgstr ""
+
+msgid "The page created for this request ID is no longer a draft."
+msgstr ""
+
+msgid "The page draft input is invalid."
+msgstr ""
+
+msgid "The template part could not be assigned to the active theme and area."
+msgstr ""
+
+msgid "The template part created for this request ID is no longer available."
+msgstr ""
+
+msgid "The template part input is invalid."
+msgstr ""
+
+msgid "This request ID has already been used with different page draft content."
+msgstr ""
+
+msgid "This request ID has already been used with different template part content."
+msgstr ""
+
+msgid "area must be one of the template part areas allowed by WordPress."
+msgstr ""
+
+msgid "menu_order must be an integer from 0 to 100000."
+msgstr ""
+
+msgid "parent_id must be a non-negative integer."
+msgstr ""
+
+msgid "parent_id must reference an editable existing page that is not in the trash."
+msgstr ""
+
+msgid "The requested template part slug could not be reserved."
 msgstr ""

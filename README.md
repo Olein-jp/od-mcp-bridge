@@ -31,9 +31,11 @@ MCP クライアントへ安全に公開するためのプラグインです。
 - `get-maintenance-snapshot`: 上記の保守情報を権限境界付きで集約
 - `get-security-posture`: 外部通信や認証情報の取得を行わないセキュリティ設定要約
 
-安全な write 系 Ability `create-post-draft` も初期状態では無効です。有効化すると、`edit_posts` を持つ
-接続ユーザーを作成者として通常投稿の下書きだけを作成できます。UUIDによる冪等性を備え、公開、
-既存投稿の更新、削除、投稿タイプ・状態・作成者の指定はできません。
+安全な write 系 Ability も初期状態では無効です。`create-post-draft` は通常投稿の下書き、
+`create-page-draft` は固定ページの下書きを、接続ユーザーを作成者として作成します。
+`create-template-part` は、現在のブロックテーマへデータベース保存型のテンプレートパーツを新規作成します。
+いずれもUUIDによる冪等性を備え、既存コンテンツの更新や削除は行いません。新しい固定ページと
+テンプレートパーツのAbilityはApplication Password接続専用で、OAuth経由では既定で拒否します。
 
 下書きや非公開コンテンツ、ユーザー情報、認証情報、ファイルパス、Cron 引数は返しません。
 詳細な権限と入出力は[利用マニュアル](docs/user-manual.md#ability-一覧と必要権限)を参照してください。
@@ -89,7 +91,8 @@ npm run i18n:pot
 `composer test:integration` は wp-env の `tests-cli` コンテナで PHPUnit を実行します。
 テストでは WordPress 6.9以上、Ability の登録とスキーマ、権限、公開コンテンツの絞り込み、
 保守情報のサニタイズ、設定による無効化、保守スナップショットの失敗分離、
-セキュリティ設定要約の権限・情報漏えい・外部通信禁止に加え、投稿下書きの入力制限、
+セキュリティ設定要約の権限・情報漏えい・外部通信禁止に加え、投稿・固定ページ下書きと
+テンプレートパーツ作成の入力制限、
 権限分離、冪等性、同時実行防止、OAuth write scopeを確認します。
 
 WordPress 管理画面の「設定 → OD MCP Bridge」では、MCP エンドポイントの確認と、
@@ -167,8 +170,10 @@ https://example.com/wp-json/od-mcp-bridge/v1/oauth-protected-resource
 2. 公開コンテンツ系だけを使う場合は「購読者（Subscriber）」、保守系も使う場合は
    プラグインが作成する「MCP Maintenance Reader」ロールを選びます。この専用ロールには
    プラグイン有効化、テーマ変更、設定変更などのWordPress管理権限は含まれません。
-   `create-post-draft` を使う場合は「投稿者（Author）」など `edit_posts` を持つ専用ユーザーを
-   別に用意します。MCP Maintenance Readerには投稿作成権限を付与しません。
+   `create-post-draft` を使う場合は「投稿者（Author）」など `edit_posts` を持つ専用ユーザーを、
+   `create-page-draft` には `edit_pages` を持つ専用ユーザーを用意します。テンプレートパーツ作成用ユーザーには
+   `od_mcp_bridge_create_template_parts` capabilityだけを個別に付与できます。MCP Maintenance Readerには
+   これらの作成権限を付与しません。
 3. 専用ユーザーでログインし、「ユーザー → プロフィール」の「Application Passwords」で
    `OD MCP Bridge` などの識別しやすい名前を入力して発行します。
 4. 表示された Application Password は一度だけコピーし、MCP クライアント側の
@@ -303,6 +308,21 @@ mcp_inspector \
 成功時は投稿ID、固定値 `draft` の状態、管理画面の編集URL、実際に新規作成したかを示す
 `created` が返ります。プラグインから公開は行わないため、編集URLで内容を確認したうえで、
 公開はWordPress管理画面から人が行ってください。
+
+固定ページ下書きとテンプレートパーツはApplication Password接続専用です。対象Abilityを有効にし、
+それぞれ `edit_pages` または `od_mcp_bridge_create_template_parts` を持つ専用ユーザーで実行します。
+
+```bash
+mcp_inspector \
+  --method tools/call \
+  --tool-name mcp-adapter-execute-ability \
+  --tool-args-json '{"ability_name":"od-mcp-bridge/create-page-draft","parameters":{"request_id":"650e8400-e29b-41d4-a716-446655440000","title":"会社概要","content":"<!-- wp:paragraph --><p>会社概要を入力してください。</p><!-- /wp:paragraph -->"}}'
+
+mcp_inspector \
+  --method tools/call \
+  --tool-name mcp-adapter-execute-ability \
+  --tool-args-json '{"ability_name":"od-mcp-bridge/create-template-part","parameters":{"request_id":"750e8400-e29b-41d4-a716-446655440000","title":"キャンペーンヘッダー","slug":"campaign-header","content":"<!-- wp:group --><div class=\"wp-block-group\"></div><!-- /wp:group -->","area":"header"}}'
+```
 
 認証拒否も確認します。次のリクエストは Application Password を送らないため、HTTP
 `401` になる必要があります。

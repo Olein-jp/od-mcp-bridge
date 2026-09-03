@@ -377,13 +377,13 @@ msgstr "指定されたカテゴリーの一部または全部が存在しませ
 #: src/Admin/class-settings-page.php:436
 msgid ""
 "Only enabled abilities are registered and exposed. Public content abilities "
-"are enabled by default. Maintenance abilities and post draft creation are "
-"disabled by default; draft creation requires edit_posts and never grants it "
-"to the MCP Maintenance Reader role."
+"are enabled by default. Maintenance and write abilities are disabled by "
+"default; write capabilities are never granted to the MCP Maintenance Reader "
+"role."
 msgstr ""
 "有効な Ability だけを登録・公開します。公開コンテンツ系は初期状態で有効です。"
-"保守系と投稿下書き作成は初期状態で無効です。下書き作成には edit_posts が必要"
-"であり、MCP Maintenance Reader ロールには付与されません。"
+"保守系と書き込み系は初期状態で無効で、MCP Maintenance Reader ロールには書き"
+"込み権限を付与しません。"
 
 #: src/Admin/class-connection-diagnostics.php:72
 msgid "PHP version"
@@ -750,3 +750,72 @@ msgstr "request_id には有効な UUID を指定してください。"
 #: src/OAuth/class-user-mapper.php:114
 msgid "the configured issuer"
 msgstr "設定済みの Issuer"
+
+msgid "A page draft creation request with this request ID is already in progress."
+msgstr "この request_id を使った固定ページ下書きの作成処理は実行中です。"
+
+msgid "A template part creation request for this slug is already in progress."
+msgstr "この slug を使ったテンプレートパーツの作成処理は実行中です。"
+
+msgid "A template part creation request with this request ID is already in progress."
+msgstr "この request_id を使ったテンプレートパーツの作成処理は実行中です。"
+
+msgid "A template part with this slug already exists or the slug is reserved by another theme."
+msgstr "この slug のテンプレートパーツがすでに存在するか、別のテーマで使用されています。"
+
+msgid "Create a page draft"
+msgstr "固定ページの下書きを作成"
+
+msgid "Create a template part"
+msgstr "テンプレートパーツを作成"
+
+msgid "Create page draft (write)"
+msgstr "固定ページ下書きの作成（書き込み）"
+
+msgid "Create template part (write)"
+msgstr "テンプレートパーツの作成（書き込み）"
+
+msgid "Creates a new database-backed template part for the active block theme without overwriting an existing part."
+msgstr "既存のパーツを上書きせず、有効なブロックテーマにデータベース保存型のテンプレートパーツを新規作成します。"
+
+msgid "Creates only a page draft for the current user, with request ID based idempotency."
+msgstr "現在のユーザーを作成者として固定ページの下書きだけを作成し、request_id により重複を防止します。"
+
+msgid "Template parts can only be created while a block theme is active."
+msgstr "テンプレートパーツは、ブロックテーマが有効な場合にのみ作成できます。"
+
+msgid "The page created for this request ID is no longer a draft."
+msgstr "この request_id で作成した固定ページは、すでに下書きではありません。"
+
+msgid "The page draft input is invalid."
+msgstr "固定ページ下書きの入力内容が正しくありません。"
+
+msgid "The template part could not be assigned to the active theme and area."
+msgstr "テンプレートパーツを有効なテーマと領域へ割り当てられませんでした。"
+
+msgid "The template part created for this request ID is no longer available."
+msgstr "この request_id で作成したテンプレートパーツは利用できなくなっています。"
+
+msgid "The template part input is invalid."
+msgstr "テンプレートパーツの入力内容が正しくありません。"
+
+msgid "This request ID has already been used with different page draft content."
+msgstr "この request_id は、異なる固定ページ下書きの内容ですでに使用されています。"
+
+msgid "This request ID has already been used with different template part content."
+msgstr "この request_id は、異なるテンプレートパーツの内容ですでに使用されています。"
+
+msgid "area must be one of the template part areas allowed by WordPress."
+msgstr "area には、WordPressで許可されているテンプレートパーツ領域を指定してください。"
+
+msgid "menu_order must be an integer from 0 to 100000."
+msgstr "menu_order には 0 から 100000 までの整数を指定してください。"
+
+msgid "parent_id must be a non-negative integer."
+msgstr "parent_id には 0 以上の整数を指定してください。"
+
+msgid "parent_id must reference an editable existing page that is not in the trash."
+msgstr "parent_id には、編集可能でゴミ箱に入っていない既存の固定ページを指定してください。"
+
+msgid "The requested template part slug could not be reserved."
+msgstr "指定されたテンプレートパーツの slug を確保できませんでした。"

@@ -7,8 +7,10 @@
 
 use Olein\MCPBridge\Abilities;
 use Olein\MCPBridge\Admin\Settings_Page;
+use Olein\MCPBridge\Draft_Page_Creator;
 use Olein\MCPBridge\Draft_Post_Creator;
 use Olein\MCPBridge\Role_Manager;
+use Olein\MCPBridge\Template_Part_Creator;
 
 /**
  * Tests public Ability contracts in a real WordPress environment.
@@ -28,6 +30,8 @@ class Test_OD_MCP_Bridge_Abilities extends WP_UnitTestCase {
 		'od-mcp-bridge/get-page',
 		'od-mcp-bridge/get-terms',
 		'od-mcp-bridge/create-post-draft',
+		'od-mcp-bridge/create-page-draft',
+		'od-mcp-bridge/create-template-part',
 		'od-mcp-bridge/get-update-status',
 		'od-mcp-bridge/get-plugins',
 		'od-mcp-bridge/get-themes',
@@ -359,6 +363,96 @@ class Test_OD_MCP_Bridge_Abilities extends WP_UnitTestCase {
 		$this->assertWPError( $ability->execute( $empty_title ) );
 	}
 
+	/** Confirms page draft creation is opt-in, capability-gated, and idempotent. */
+	public function test_page_draft_ability_creates_only_a_page_draft() {
+		$this->enable_abilities( array( 'create-page-draft' ) );
+		$ability = wp_get_ability( 'od-mcp-bridge/create-page-draft' );
+		$input   = $this->get_page_draft_input(
+			array(
+				'menu_order' => 7,
+				'title'      => '<b>Safe page</b>',
+				'content'    => '<!-- wp:paragraph --><p>Allowed</p><!-- /wp:paragraph --><script>alert(1)</script>',
+			)
+		);
+
+		wp_set_current_user( self::factory()->user->create( array( 'role' => 'author' ) ) );
+		$this->assertFalse( $ability->check_permissions( $input ) );
+
+		$user_id = self::factory()->user->create( array( 'role' => 'editor' ) );
+		wp_set_current_user( $user_id );
+		$this->assertTrue( $ability->check_permissions( $input ) );
+		$first  = $ability->execute( $input );
+		$replay = $ability->execute( $input );
+
+		$this->assertTrue( $first['created'] );
+		$this->assertFalse( $replay['created'] );
+		$this->assertSame( $first['id'], $replay['id'] );
+		$this->assertSame( 'page', get_post_type( $first['id'] ) );
+		$this->assertSame( 'draft', get_post_status( $first['id'] ) );
+		$this->assertSame( 'Safe page', get_post_field( 'post_title', $first['id'] ) );
+		$this->assertSame( 7, (int) get_post_field( 'menu_order', $first['id'] ) );
+		$this->assertSame( $user_id, (int) get_post_field( 'post_author', $first['id'] ) );
+		$this->assertStringNotContainsString( '<script', get_post_field( 'post_content', $first['id'] ) );
+		$this->assertSame( '1', get_post_meta( $first['id'], Draft_Page_Creator::META_CREATED, true ) );
+	}
+
+	/** Confirms page draft parent validation rejects non-page content. */
+	public function test_page_draft_ability_rejects_invalid_parent() {
+		$this->enable_abilities( array( 'create-page-draft' ) );
+		wp_set_current_user( self::factory()->user->create( array( 'role' => 'editor' ) ) );
+		$post_id = self::factory()->post->create();
+		$input   = $this->get_page_draft_input( array( 'parent_id' => $post_id ) );
+
+		$result = wp_get_ability( 'od-mcp-bridge/create-page-draft' )->execute( $input );
+
+		$this->assertWPError( $result );
+		$this->assertSame( 'od_mcp_bridge_invalid_page_draft_input', $result->get_error_code() );
+	}
+
+	/** Confirms template part creation uses a dedicated capability and never overwrites. */
+	public function test_template_part_ability_creates_only_a_new_part_for_active_block_theme() {
+		if ( ! wp_get_theme( 'twentytwentyfive' )->exists() ) {
+			$this->markTestSkipped( 'The Twenty Twenty-Five block theme is unavailable.' );
+		}
+
+		$previous_theme = get_stylesheet();
+		switch_theme( 'twentytwentyfive' );
+		$this->enable_abilities( array( 'create-template-part' ) );
+		$ability = wp_get_ability( 'od-mcp-bridge/create-template-part' );
+		$input   = $this->get_template_part_input();
+		$user_id = self::factory()->user->create( array( 'role' => 'subscriber' ) );
+		$user    = new WP_User( $user_id );
+		wp_set_current_user( $user_id );
+
+		try {
+			$this->assertFalse( $ability->check_permissions( $input ) );
+			$user->add_cap( Role_Manager::CREATE_TEMPLATE_PARTS );
+			$this->assertTrue( $ability->check_permissions( $input ) );
+
+			$first  = $ability->execute( $input );
+			$replay = $ability->execute( $input );
+
+			$this->assertTrue( $first['created'] );
+			$this->assertFalse( $replay['created'] );
+			$this->assertSame( $first['id'], $replay['id'] );
+			$this->assertSame( 'wp_template_part', get_post_type( $first['id'] ) );
+			$this->assertSame( 'publish', get_post_status( $first['id'] ) );
+			$this->assertSame( get_stylesheet() . '//mcp-test-part', $first['template_id'] );
+			$this->assertContains( get_stylesheet(), wp_get_post_terms( $first['id'], 'wp_theme', array( 'fields' => 'slugs' ) ) );
+			$this->assertContains( 'header', wp_get_post_terms( $first['id'], 'wp_template_part_area', array( 'fields' => 'slugs' ) ) );
+			$this->assertSame( '1', get_post_meta( $first['id'], Template_Part_Creator::META_CREATED, true ) );
+
+			$duplicate               = $input;
+			$duplicate['request_id'] = '44444444-4444-4444-8444-444444444444';
+			$result                  = $ability->execute( $duplicate );
+			$this->assertWPError( $result );
+			$this->assertSame( 'od_mcp_bridge_template_part_exists', $result->get_error_code() );
+		} finally {
+			$user->remove_cap( Role_Manager::CREATE_TEMPLATE_PARTS );
+			switch_theme( $previous_theme );
+		}
+	}
+
 	/** Confirms maintenance abilities retain read-only metadata and elevated permissions. */
 	public function test_maintenance_abilities_enforce_permissions() {
 		$maintenance_keys = array(
@@ -641,6 +735,33 @@ class Test_OD_MCP_Bridge_Abilities extends WP_UnitTestCase {
 				'content'    => '<p>Draft content</p>',
 			),
 			$overrides
+		);
+	}
+
+	/**
+	 * Returns valid page draft input with optional overrides.
+	 *
+	 * @param array<string, mixed> $overrides Input overrides.
+	 */
+	private function get_page_draft_input( $overrides = array() ) {
+		return array_merge(
+			array(
+				'request_id' => '22222222-2222-4222-8222-222222222222',
+				'title'      => 'MCP page draft',
+				'content'    => '<p>Page draft content</p>',
+			),
+			$overrides
+		);
+	}
+
+	/** Returns valid template part input. */
+	private function get_template_part_input() {
+		return array(
+			'request_id' => '33333333-3333-4333-8333-333333333333',
+			'title'      => 'MCP test part',
+			'slug'       => 'mcp-test-part',
+			'content'    => '<!-- wp:paragraph --><p>Template part content</p><!-- /wp:paragraph -->',
+			'area'       => 'header',
 		);
 	}
 

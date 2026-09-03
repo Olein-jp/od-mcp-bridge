@@ -1,11 +1,12 @@
 # OD MCP Bridge 利用マニュアル
 
 このマニュアルは、OD MCP Bridge を WordPress サイトへ導入し、MCP クライアントから
-公開コンテンツやサイト保守情報を安全に読み取り、必要に応じて投稿下書きを作成する手順をまとめたものです。
+公開コンテンツやサイト保守情報を安全に読み取り、必要に応じて投稿・固定ページの下書きや
+テンプレートパーツを作成する手順をまとめたものです。
 
 OD MCP Bridge は、WordPress に登録した機能を AI クライアントから呼び出せるようにする
-プラグインです。読み取り機能に加え、初期状態で無効な「投稿下書き作成」だけを write 系機能として提供します。
-公開、既存投稿の更新、削除は行いません。
+プラグインです。読み取り機能に加え、初期状態で無効な3つの write 系機能を提供します。
+投稿や固定ページの公開、既存コンテンツの更新、削除は行いません。
 
 ## 実サイトで試すための最短手順
 
@@ -94,7 +95,7 @@ Ability の識別名、JSON のキー、capability、OAuth scope は外部連携
 ## できることと、できないこと
 
 Ability は、WordPress 側で実行できる個別の機能を表します。公開コンテンツ系6件と、
-サイト保守系9件と、安全な投稿下書き作成1件を利用できます。保守系と下書き作成は初期状態で無効です。
+サイト保守系9件と、安全な書き込み系3件を利用できます。保守系と書き込み系は初期状態で無効です。
 
 ## Ability 一覧と必要権限
 
@@ -105,6 +106,8 @@ Ability は、WordPress 側で実行できる個別の機能を表します。�
 | `get-pages` / `get-page` | 公開済み固定ページの一覧・本文 | `read` | `od-mcp:content:read` | 有効 |
 | `get-terms` | カテゴリーまたはタグ | `read` | `od-mcp:content:read` | 有効 |
 | `create-post-draft` | 投稿下書きを新規作成 | `edit_posts`（カテゴリー指定時は `assign_terms` も必要） | `od-mcp:content:write` | 無効 |
+| `create-page-draft` | 固定ページ下書きを新規作成 | `edit_pages` | Application Passwordのみ | 無効 |
+| `create-template-part` | 現在のブロックテーマへテンプレートパーツを新規作成 | `od_mcp_bridge_create_template_parts` | Application Passwordのみ | 無効 |
 | `get-update-status` | キャッシュ済み更新状況 | `od_mcp_bridge_view_*_updates` | `od-mcp:maintenance:read` | 無効 |
 | `get-plugins` | プラグイン状態 | `od_mcp_bridge_view_plugins` | `od-mcp:maintenance:read` | 無効 |
 | `get-themes` | テーマ状態 | `od_mcp_bridge_view_themes` | `od-mcp:maintenance:read` | 無効 |
@@ -124,6 +127,14 @@ WordPress管理権限を付与しないため、管理者をMCP接続へ使わ�
 `MCP Maintenance Reader` には `edit_posts` を付与しないため、下書き作成には投稿者などの
 投稿作成権限を持つ別の専用ユーザーを使用してください。
 
+テンプレートパーツ作成用の `od_mcp_bridge_create_template_parts` は管理者ロールへ自動付与されますが、
+MCP接続に管理者を使う必要はありません。専用ユーザーへこの capability だけを個別に付与してください。
+たとえばWP-CLIでは、実際の専用ユーザー名へ置き換えて次のように設定できます。
+
+```bash
+wp user add-cap <専用ユーザー名> od_mcp_bridge_create_template_parts
+```
+
 ## Codex などの AI クライアントから使うときのプロンプト例
 
 OD MCP Bridge を MCP server として Codex などの AI クライアントに接続すると、通常は Ability 名や
@@ -137,8 +148,8 @@ Ability を確認し、必要なものを実行して結果を読みやすく要
 保守系 Ability は初期状態で無効です。利用前に「設定」→「OD MCP Bridge」で対象を有効にし、
 必要な capability を持つ専用ユーザーで接続してください。無効な Ability は AI クライアントから発見できず、
 権限が不足している場合は実行を拒否します。
-投稿下書き作成も初期状態では無効です。意図しない書き込みを避けるため、必要なサイトだけで
-`create-post-draft` を有効にしてください。
+書き込み系Abilityも初期状態では無効です。意図しない書き込みを避けるため、必要なサイトだけで
+`create-post-draft`、`create-page-draft`、`create-template-part` のうち必要なものを有効にしてください。
 
 ### 1. サイトの基本情報を確認する：`get-site-info`
 
@@ -297,11 +308,29 @@ AIクライアントは本文を整え、重複防止用の UUID を生成して
 常に通常投稿、下書き、現在の接続ユーザーへ固定します。作成後は編集 URL を開いて内容を確認し、
 公開操作はWordPress管理画面から人が行ってください。
 
-`create-post-draft` 以外はすべて読み取り専用です。次の情報や操作は対象に含まれません。
+### 17. 固定ページの下書きを作成する：`create-page-draft`
+
+新しい固定ページを、接続ユーザーを作成者とする下書きとして保存します。
+
+> 「会社概要」というタイトルで、会社情報を掲載する固定ページの下書きを作成してください。公開はしないでください。
+
+親固定ページと表示順も任意で指定できます。作成後は返された編集URLをWordPress管理画面で開き、
+本文、階層、表示順を確認してから人が公開してください。
+
+### 18. テンプレートパーツを作成する：`create-template-part`
+
+現在のブロックテーマへ、新しいデータベース保存型テンプレートパーツを作成します。
+
+> 「キャンペーンヘッダー」という名前で、slugが `campaign-header`、areaが `header` のテンプレートパーツを作成してください。
+
+既存のテンプレートパーツは上書きせず、作成したパーツを既存テンプレートへ自動配置することもありません。
+サイトエディターで内容を確認してから、使用するテンプレートへ配置してください。
+
+このほかのAbilityはすべて読み取り専用です。次の情報や操作は対象に含まれません。
 
 - 下書き、予約投稿、非公開投稿の取得
 - ユーザー情報や認証情報の取得
-- 投稿下書き以外の作成、既存投稿の更新、公開、削除
+- 対応する3種類以外の作成、既存コンテンツの更新、投稿・固定ページの公開、削除
 - WordPress の設定変更
 - サーバー内のファイルパスや WP-Cron の引数の取得
 - サイトヘルス確認を目的とした外部 HTTP 通信
@@ -367,8 +396,9 @@ https://example.com/wp-json/mcp/mcp-adapter-default-server
 
 「設定」→「OD MCP Bridge」では、MCP クライアントへ公開する Ability を個別に切り替えられます。
 初期状態では公開コンテンツ系6件だけが有効です。保守系は公開範囲と必要権限を確認してから
-個別に有効化してください。write系の `create-post-draft` も初期状態では無効です。実際に下書き作成が
-必要なサイトでのみ有効にし、読み取り専用の接続では無効のままにしてください。
+個別に有効化してください。write系の `create-post-draft`、`create-page-draft`、
+`create-template-part` も初期状態では無効です。実際に作成操作が必要なサイトでのみ有効にし、
+読み取り専用の接続では無効のままにしてください。
 
 1. 公開したい Ability にチェックを入れる
 2. 公開しない Ability のチェックを外す
@@ -383,7 +413,7 @@ https://example.com/wp-json/mcp/mcp-adapter-default-server
 
 1. 管理者で「ユーザー」→「ユーザーを追加」を開く
 2. MCP 接続専用のユーザー名とメールアドレスを入力する
-3. 公開コンテンツだけなら「購読者」、保守系も使うなら「MCP Maintenance Reader」、投稿下書きを作るなら「投稿者」など `edit_posts` を持つロールを選択する
+3. 公開コンテンツだけなら「購読者」、保守系も使うなら「MCP Maintenance Reader」、投稿下書きなら「投稿者」、固定ページ下書きなら「編集者」など必要な権限を持つロールを選択する
 4. ユーザーを追加する
 
 購読者は、初期状態の6件と `get-stale-content` を利用できます。「MCP Maintenance Reader」は
@@ -393,6 +423,10 @@ https://example.com/wp-json/mcp/mcp-adapter-default-server
 「MCP Maintenance Reader」には `edit_posts` がないため、`create-post-draft` は実行できません。
 読み取りと書き込みの用途を分離したい場合は、保守確認用と下書き作成用でユーザーとApplication
 Passwordを分けてください。下書き作成だけを目的に管理者アカウントを使う必要はありません。
+
+テンプレートパーツ作成では、ブロックテーマが有効であることに加え、接続ユーザーへ
+`od_mcp_bridge_create_template_parts` capabilityを個別に付与します。この独自権限だけではテーマ変更、
+プラグイン管理、WordPress設定変更はできません。
 
 専用ユーザーは通常の閲覧者と区別しやすい名前にしてください。ただし、このユーザー名を
 README、Issue、サポートへの問い合わせなど、第三者が閲覧できる場所へ記載しないでください。
@@ -449,7 +483,8 @@ OAuth resource URIを空欄にすると、表示中のMCP endpointが使用さ�
 OAuth接続でAbilityを探索すると、アクセストークンが持つScopeに対応するAbilityだけが返ります。
 たとえば `od-mcp:discover od-mcp:content:read` のトークンには公開コンテンツ系だけが表示され、
 保守系Abilityの探索結果と詳細は表示されません。Application Password接続の探索結果は従来どおりです。
-下書き作成を探索・実行するには `od-mcp:content:write` が必要で、読み取りScopeだけでは許可されません。
+投稿下書き作成を探索・実行するには `od-mcp:content:write` が必要で、読み取りScopeだけでは許可されません。
+固定ページ下書きとテンプレートパーツの作成はApplication Password接続専用で、OAuthでは実行できません。
 
 「Application Password and OAuth」は移行確認用です。このモードでは有効なApplication Passwordも
 代替の認証経路になるため、OAuth移行後は「OAuth only」を推奨します。
@@ -669,6 +704,26 @@ mcp_inspector \
   --tool-args-json '{"ability_name":"od-mcp-bridge/create-post-draft","parameters":{"request_id":"550e8400-e29b-41d4-a716-446655440000","title":"夏季休業のお知らせ","content":"<!-- wp:paragraph --><p>8月13日から16日まで休業します。</p><!-- /wp:paragraph -->"}}'
 ```
 
+固定ページ下書きを作成する場合は `create-page-draft` を有効にし、`edit_pages` を持つ専用ユーザーの
+Application Passwordで実行します。
+
+```bash
+mcp_inspector \
+  --method tools/call \
+  --tool-name mcp-adapter-execute-ability \
+  --tool-args-json '{"ability_name":"od-mcp-bridge/create-page-draft","parameters":{"request_id":"650e8400-e29b-41d4-a716-446655440000","title":"会社概要","content":"<!-- wp:paragraph --><p>会社概要を入力してください。</p><!-- /wp:paragraph -->"}}'
+```
+
+テンプレートパーツを作成する場合は `create-template-part` を有効にし、専用capabilityを持つユーザーの
+Application Passwordで実行します。
+
+```bash
+mcp_inspector \
+  --method tools/call \
+  --tool-name mcp-adapter-execute-ability \
+  --tool-args-json '{"ability_name":"od-mcp-bridge/create-template-part","parameters":{"request_id":"750e8400-e29b-41d4-a716-446655440000","title":"キャンペーンヘッダー","slug":"campaign-header","content":"<!-- wp:group --><div class=\"wp-block-group\"></div><!-- /wp:group -->","area":"header"}}'
+```
+
 保守スナップショットを使う場合は、管理画面でスナップショットと必要な保守系 Ability を
 有効にしてから、「MCP Maintenance Reader」ロールの専用ユーザーで実行します。
 
@@ -826,6 +881,46 @@ unset WP_API_PASSWORD
 
 同じ `request_id` と同じ内容を再送した場合は、同じ `id` と `created: false` が返ります。
 `edit_url` は認証済みのWordPress管理画面で開き、本文、カテゴリー、表示内容を確認してください。
+
+### `od-mcp-bridge/create-page-draft`
+
+初期状態では無効です。「設定」→「OD MCP Bridge」で有効にし、`edit_pages` を持つ専用ユーザーの
+Application Passwordで接続してください。OAuth接続からは実行できません。
+
+| パラメータ | 型 | 必須 | 内容 |
+| --- | --- | --- | --- |
+| `request_id` | UUID文字列 | 必須 | 接続ユーザー単位の重複防止キー |
+| `title` | 文字列 | 必須 | サニタイズ後に空ではないタイトル。最大200文字 |
+| `content` | 文字列 | 必須 | 固定ページ本文。空文字可、最大200,000文字 |
+| `excerpt` | 文字列 | 任意 | 抜粋。最大5,000文字 |
+| `parent_id` | 0以上の整数 | 任意 | 親にする既存固定ページID。初期値0 |
+| `menu_order` | 0〜100,000の整数 | 任意 | 表示順。初期値0 |
+
+固定ページは必ず `draft`、現在の接続ユーザーを作成者として保存します。公開状態、作成者、日時、
+slugは指定できません。返却値と再送時の動作は `create-post-draft` と同じです。
+
+### `od-mcp-bridge/create-template-part`
+
+初期状態では無効で、Application Password接続専用です。現在のテーマがブロックテーマであり、
+接続ユーザーが `od_mcp_bridge_create_template_parts` capabilityを持つ場合だけ実行できます。
+
+| パラメータ | 型 | 必須 | 内容 |
+| --- | --- | --- | --- |
+| `request_id` | UUID文字列 | 必須 | 接続ユーザー単位の重複防止キー |
+| `title` | 文字列 | 必須 | テンプレートパーツ名。最大200文字 |
+| `slug` | 文字列 | 必須 | 小文字英数字とハイフンだけの一意なslug。最大200文字 |
+| `content` | 文字列 | 必須 | ブロックマークアップ。空文字可、最大200,000文字 |
+| `area` | 文字列 | 必須 | WordPressで許可された `header`、`footer`、`uncategorized` などの領域 |
+
+テンプレートパーツは現在のテーマに属するデータベース保存型として作成されます。現在のテーマに
+同じslugのファイル由来パーツがある場合や、いずれかのテーマ用に同じslugのデータベース由来パーツが
+ある場合は、WordPressによる意図しないslug変更を避けるため、上書きせず競合エラーを返します。
+作成しただけでは既存テンプレートへ自動挿入されません。サイトエディターで内容を確認し、必要な
+テンプレートへ配置してください。
+
+返却値は数値の `id`、`theme//slug` 形式の `template_id`、`publish` の `status`、`slug`、`theme`、
+`area`、`created` です。WordPress内部ではテンプレートパーツを利用可能にするため `publish` として
+保存されますが、既存テンプレートへ自動配置しないため、作成だけでサイト表示は変更されません。
 
 ### `od-mcp-bridge/get-update-status`
 
@@ -992,14 +1087,15 @@ MCP Inspector と `@automattic/mcp-wordpress-remote` の実行環境で、Node.j
 - 通常のログインパスワードを MCP クライアントへ渡していない
 - アプリケーションパスワードをリポジトリや Issue へ保存していない
 - 必要な Ability だけを有効にしている
-- `create-post-draft` は必要なサイトだけで有効にし、作成後の内容と公開判断を人が確認している
-- OAuthでwrite系を使うクライアントだけに `od-mcp:content:write` を許可している
+- write系Abilityは必要なサイトだけで有効にし、作成後の内容を人が確認している
+- テンプレートパーツ作成用ユーザーには専用capabilityだけを付与している
+- OAuthで投稿下書きを作るクライアントだけに `od-mcp:content:write` を許可している
 - 使わなくなったアプリケーションパスワードを失効している
 - 認証情報が漏れた可能性があれば、最初に WordPress 側で失効している
 
-公開コンテンツ・保守系 Ability は読み取り専用ですが、`create-post-draft` は投稿を保存するwrite系です。
-公開や既存投稿の変更は行わないものの、WordPressへデータを書き込む点を理解し、接続先、認証情報、
-有効なAbility、作成された下書きを適切に管理してください。
+公開コンテンツ・保守系 Ability は読み取り専用ですが、3つの作成AbilityはWordPressへ保存するwrite系です。
+投稿・固定ページの公開や既存コンテンツの変更は行わないものの、WordPressへデータを書き込む点を理解し、
+接続先、認証情報、有効なAbility、作成されたコンテンツを適切に管理してください。
 
 ## 参考リンク
 

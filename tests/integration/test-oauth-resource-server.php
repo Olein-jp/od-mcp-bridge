@@ -133,6 +133,21 @@ class Test_OD_MCP_Bridge_OAuth_Resource_Server extends WP_UnitTestCase {
 		$this->assertSame( 'oauth_unmapped_ability', $response->get_data()['code'] );
 	}
 
+	/** Confirms the new write abilities remain Application Password only. */
+	public function test_page_and_template_part_creation_are_not_mapped_to_oauth() {
+		$user_id = self::factory()->user->create( array( 'role' => 'administrator' ) );
+		$this->map_user( $user_id );
+		$this->filter_validated_claims( array( Scope_Policy::DISCOVER, Scope_Policy::CONTENT_WRITE ) );
+
+		foreach ( array( 'od-mcp-bridge/create-page-draft', 'od-mcp-bridge/create-template-part' ) as $ability_name ) {
+			$response = $this->create_resource_server()->protect_mcp_request( null, null, $this->create_ability_request( $ability_name ) );
+
+			$this->assertSame( 403, $response->get_status() );
+			$this->assertSame( 'oauth_unmapped_ability', $response->get_data()['code'] );
+			wp_set_current_user( 0 );
+		}
+	}
+
 	/** Confirms OAuth discovery returns only abilities covered by token scopes. */
 	public function test_discovery_result_is_limited_to_token_scopes() {
 		$user_id = self::factory()->user->create( array( 'role' => 'subscriber' ) );
