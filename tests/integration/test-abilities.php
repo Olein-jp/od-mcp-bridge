@@ -421,13 +421,12 @@ class Test_OD_MCP_Bridge_Abilities extends WP_UnitTestCase {
 		$ability = wp_get_ability( 'od-mcp-bridge/create-template-part' );
 		$input   = $this->get_template_part_input();
 		$user_id = self::factory()->user->create( array( 'role' => 'subscriber' ) );
-		$user    = new WP_User( $user_id );
 		wp_set_current_user( $user_id );
+		$user = wp_get_current_user();
 
 		try {
 			$this->assertFalse( $ability->check_permissions( $input ) );
 			$user->add_cap( Role_Manager::CREATE_TEMPLATE_PARTS );
-			wp_set_current_user( $user_id );
 			$this->assertTrue( $ability->check_permissions( $input ) );
 
 			$first  = $ability->execute( $input );
