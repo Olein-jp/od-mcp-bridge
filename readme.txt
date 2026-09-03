@@ -3,7 +3,7 @@ Contributors: olein
 Requires at least: 6.9
 Tested up to: 7.1
 Requires PHP: 7.4
-Stable tag: 0.4.1
+Stable tag: 0.5.0
 License: GPLv2 or later
 License URI: https://www.gnu.org/licenses/gpl-2.0.html
 
@@ -20,6 +20,11 @@ Every ability requires an authenticated WordPress user. Idempotent post-draft, p
 Authentication supports WordPress Application Passwords and an optional OAuth resource-server mode. OAuth mode validates RS256 JWT access tokens against a configured issuer, JWKS URI, audience, subject mapping, per-ability scope, and the existing WordPress capability checks. OD MCP Bridge does not issue or store access or refresh tokens.
 
 == Changelog ==
+
+= 0.5.0 =
+* Add an opt-in, idempotent fixed-page draft creation ability.
+* Add Application Password-only block template part creation with a dedicated capability and overwrite protection.
+* Expand permissions, diagnostics, integration coverage, documentation, and Japanese translations for the new write abilities.
 
 = 0.4.1 =
 * Confirm compatibility with WordPress 7.1.
