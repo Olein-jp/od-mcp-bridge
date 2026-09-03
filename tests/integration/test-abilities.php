@@ -427,6 +427,7 @@ class Test_OD_MCP_Bridge_Abilities extends WP_UnitTestCase {
 		try {
 			$this->assertFalse( $ability->check_permissions( $input ) );
 			$user->add_cap( Role_Manager::CREATE_TEMPLATE_PARTS );
+			wp_set_current_user( $user_id );
 			$this->assertTrue( $ability->check_permissions( $input ) );
 
 			$first  = $ability->execute( $input );
